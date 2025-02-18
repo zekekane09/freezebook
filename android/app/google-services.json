@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "381126028977",
+    "project_id": "freezebook-ab0ba",
+    "storage_bucket": "freezebook-ab0ba.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:381126028977:android:4c25781dbe35bcb7823c90",
+        "android_client_info": {
+          "package_name": "com.example.freezebook"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAS8AmJ2ejfyQm2mVmHCYJap6neBjb8kRI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

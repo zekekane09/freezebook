@@ -1,0 +1,128 @@
+import 'package:flutter/material.dart';
+import 'package:freezebook/videoscrollerapp.dart';
+import 'homescreen.dart'; // Ensure other screens are imported
+import 'loginpage.dart';
+import 'movie_explorer_app.dart';
+import 'profilescreen.dart'; // Import your ProfileScreen
+import 'notificationscreen.dart'; // Import your NotificationScreen
+import 'menuscreen.dart'; // Import your MenuScreen
+
+class Homepage extends StatelessWidget {
+  final String? username;
+
+  const Homepage({super.key, required this.username});
+
+  @override
+  Widget build(BuildContext context) {
+    return WillPopScope(
+      onWillPop: () async {
+        // Prevent the app from closing
+        return await _showLogoutDialog(context);
+      },
+      child: DefaultTabController(
+        length: 6, // Number of tabs
+        child: Scaffold(
+          body: Container(
+            color: Colors.grey, // Use a solid color instead of withValues()
+            child: Column(
+              children: [
+                // Main Content
+                Expanded(
+                  child: Container(
+                    color: Colors.black,
+                    child: Column(
+                      children: [
+                        // Header
+                        Builder(
+                          builder: (context) {
+                            final tabIndex = DefaultTabController.of(context)?.index ?? 0;
+                            return tabIndex == 0 // Only show header on the HomeScreen tab
+                                ? Padding(
+                              padding: const EdgeInsets.all(8.0),
+                              child: Row(
+                                children: [
+                                  Text("Freezebook", style: TextStyle(color: Colors.white, fontSize: 30)),
+                                  Spacer(),
+                                  Row(
+                                    children: [
+                                      Icon(Icons.add_circle, color: Colors.white),
+                                      SizedBox(width: 10),
+                                      Icon(Icons.search, color: Colors.white),
+                                      SizedBox(width: 10),
+                                      Icon(Icons.email, color: Colors.white),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            )
+                                : SizedBox.shrink(); // Return an empty widget if not on HomeScreen
+                          },
+                        ),
+                        // Tab Bar
+                        TabBar(
+                          indicatorColor: Color(0xc64d4dfa),
+                          labelColor: Color(0xc64d4dfa), // Color of the selected tab's text and icon
+                          unselectedLabelColor: Colors.grey,
+                          tabs: [
+                            Tab(icon: Icon(Icons.home)),
+                            Tab(icon: Icon(Icons.video_collection)),
+                            Tab(icon: Icon(Icons.person)),
+                            Tab(icon: Icon(Icons.shopping_cart)),
+                            Tab(icon: Icon(Icons.notifications)),
+                            Tab(icon: Icon(Icons.menu)),
+                          ],
+                        ),
+                        // Tab Content
+                        Expanded(
+                          child: TabBarView(
+                            children: [
+                              HomeScreen(), // Pass any required parameters
+                              MovieExplorerHomePage(), // Replace with your actual screens
+                              ProfileScreen(),
+                              TikTokCloneApp(),
+                              NotificationScreen(),
+                              MenuScreen(),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<bool> _showLogoutDialog(BuildContext context) async {
+    return (await showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Logout or Close App?'),
+        content: Text('Do you want to log out or close the app?'),
+        actions: [
+          TextButton(
+            onPressed: () {
+              // Log out the user
+              Navigator.of(context).pop(false); // Return false to prevent closing the app
+              Navigator.of(context).pushReplacement(
+                MaterialPageRoute(builder: (context) => LoginPage()), // Navigate to LoginPage
+              );
+            },
+            child: Text('Logout'),
+          ),
+          TextButton(
+            onPressed: () {
+              // Close the app
+              Navigator.of(context).pop(true); // Return true to allow closing the app
+            },
+            child: Text('Close App'),
+          ),
+        ],
+      ),
+    )) ?? false; // Default to false if dialog is dismissed
+  }
+}

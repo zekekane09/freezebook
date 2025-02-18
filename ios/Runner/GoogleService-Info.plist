@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>API_KEY</key>
+	<string>AIzaSyC9gDEpR2_7ze6_cVlSU0WTl6I1jF0pUZg</string>
+	<key>GCM_SENDER_ID</key>
+	<string>381126028977</string>
+	<key>PLIST_VERSION</key>
+	<string>1</string>
+	<key>BUNDLE_ID</key>
+	<string>com.example.freezebook</string>
+	<key>PROJECT_ID</key>
+	<string>freezebook-ab0ba</string>
+	<key>STORAGE_BUCKET</key>
+	<string>freezebook-ab0ba.firebasestorage.app</string>
+	<key>IS_ADS_ENABLED</key>
+	<false></false>
+	<key>IS_ANALYTICS_ENABLED</key>
+	<false></false>
+	<key>IS_APPINVITE_ENABLED</key>
+	<true></true>
+	<key>IS_GCM_ENABLED</key>
+	<true></true>
+	<key>IS_SIGNIN_ENABLED</key>
+	<true></true>
+	<key>GOOGLE_APP_ID</key>
+	<string>1:381126028977:ios:e07c645655690f7b823c90</string>
+	<key>DATABASE_URL</key>
+	<string>https://freezebook-ab0ba-default-rtdb.firebaseio.com</string>
+</dict>
+</plist>
