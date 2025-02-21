@@ -7,7 +7,7 @@ import 'package:freezebook/videoplayerscreen.dart';
 class MovieListView extends StatelessWidget {
   final List<Movie> movies;
 
-  const MovieListView({required this.movies});
+  const MovieListView({super.key, required this.movies});
 
   @override
   Widget build(BuildContext context) {

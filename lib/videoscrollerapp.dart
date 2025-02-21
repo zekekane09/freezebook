@@ -6,6 +6,8 @@ import 'dart:async';
 import 'package:permission_handler/permission_handler.dart';
 
 class TikTokCloneApp extends StatefulWidget {
+  const TikTokCloneApp({super.key});
+
   @override
   _TikTokCloneAppState createState() => _TikTokCloneAppState();
 }
@@ -45,8 +47,8 @@ class _TikTokCloneAppState extends State<TikTokCloneApp> {
   }
   Future<List<String>> fetchVideosFromLocalStorage() async {
     List<String> videoPaths = [];
-    List<FileSystemEntity> _files = [];
-    String _directoryPath = '/storage/emulated/0/DCIM/Camera';
+    // List<FileSystemEntity> files0 = [];
+    // String directoryPath = '/storage/emulated/0/DCIM/Camera';
     // Access the public DCIM/Camera directory
     Directory directory = Directory('/storage/emulated/0/DCIM/Camera');
 

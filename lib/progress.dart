@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 
 
 class progress extends StatelessWidget {
+  const progress({super.key});
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -19,6 +21,8 @@ class progress extends StatelessWidget {
 }
 
 class ProgressIndicatorWidget extends StatefulWidget {
+  const ProgressIndicatorWidget({super.key});
+
   @override
   _ProgressIndicatorWidgetState createState() =>
       _ProgressIndicatorWidgetState();

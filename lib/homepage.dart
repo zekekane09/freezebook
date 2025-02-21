@@ -1,16 +1,52 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart'; // Import for SystemChrome
+import 'package:freezebook/pusoy13game.dart';
 import 'package:freezebook/videoscrollerapp.dart';
 import 'homescreen.dart'; // Ensure other screens are imported
 import 'loginpage.dart';
 import 'movie_explorer_app.dart';
-import 'profilescreen.dart'; // Import your ProfileScreen
 import 'notificationscreen.dart'; // Import your NotificationScreen
 import 'menuscreen.dart'; // Import your MenuScreen
 
-class Homepage extends StatelessWidget {
+class Homepage extends StatefulWidget {
   final String? username;
 
   const Homepage({super.key, required this.username});
+
+  @override
+  _HomepageState createState() => _HomepageState();
+}
+
+class _HomepageState extends State<Homepage> with SingleTickerProviderStateMixin {
+  late TabController _tabController;
+
+  @override
+  void initState() {
+    super.initState();
+    _tabController = TabController(length: 6, vsync: this);
+    _tabController.addListener(_onTabChanged);
+  }
+
+  @override
+  void dispose() {
+    _tabController.removeListener(_onTabChanged);
+    _tabController.dispose();
+    super.dispose();
+  }
+
+  void _onTabChanged() {
+    if (_tabController.index == 2) { // Pusoy13Game tab index
+      // Set the system UI to fullscreen
+      SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => SafeArea(child: Pusoy13Game())),
+      );
+    } else {
+      // Reset the system UI when leaving the Pusoy13Game tab
+
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -19,78 +55,77 @@ class Homepage extends StatelessWidget {
         // Prevent the app from closing
         return await _showLogoutDialog(context);
       },
-      child: DefaultTabController(
-        length: 6, // Number of tabs
-        child: Scaffold(
-          body: Container(
-            color: Colors.grey, // Use a solid color instead of withValues()
-            child: Column(
-              children: [
-                // Main Content
-                Expanded(
-                  child: Container(
-                    color: Colors.black,
-                    child: Column(
-                      children: [
-                        // Header
-                        Builder(
-                          builder: (context) {
-                            final tabIndex = DefaultTabController.of(context)?.index ?? 0;
-                            return tabIndex == 0 // Only show header on the HomeScreen tab
-                                ? Padding(
-                              padding: const EdgeInsets.all(8.0),
-                              child: Row(
-                                children: [
-                                  Text("Freezebook", style: TextStyle(color: Colors.white, fontSize: 30)),
-                                  Spacer(),
-                                  Row(
-                                    children: [
-                                      Icon(Icons.add_circle, color: Colors.white),
-                                      SizedBox(width: 10),
-                                      Icon(Icons.search, color: Colors.white),
-                                      SizedBox(width: 10),
-                                      Icon(Icons.email, color: Colors.white),
-                                    ],
-                                  ),
-                                ],
-                              ),
-                            )
-                                : SizedBox.shrink(); // Return an empty widget if not on HomeScreen
-                          },
-                        ),
-                        // Tab Bar
-                        TabBar(
-                          indicatorColor: Color(0xc64d4dfa),
-                          labelColor: Color(0xc64d4dfa), // Color of the selected tab's text and icon
-                          unselectedLabelColor: Colors.grey,
-                          tabs: [
-                            Tab(icon: Icon(Icons.home)),
-                            Tab(icon: Icon(Icons.video_collection)),
-                            Tab(icon: Icon(Icons.person)),
-                            Tab(icon: Icon(Icons.shopping_cart)),
-                            Tab(icon: Icon(Icons.notifications)),
-                            Tab(icon: Icon(Icons.menu)),
+      child: Scaffold(
+        body: Container(
+          color: Colors.grey, // Use a solid color instead of withValues()
+          child: Column(
+            children: [
+              // Main Content
+              Expanded(
+                child: Container(
+                  color: Colors.black,
+                  child: Column(
+                    children: [
+                      // Header
+                      Builder(
+                        builder: (context) {
+                          final tabIndex = _tabController.index;
+                          return tabIndex == 0 // Only show header on the HomeScreen tab
+                              ? Padding(
+                            padding: const EdgeInsets.all(8.0),
+                            child: Row(
+                              children: [
+                                Text("Freezebook", style: TextStyle(color: Colors.white, fontSize: 30)),
+                                Spacer(),
+                                Row(
+                                  children: [
+                                    Icon(Icons.add_circle, color: Colors.white),
+                                    SizedBox(width: 10),
+                                    Icon(Icons.search, color: Colors.white),
+                                    SizedBox(width: 10),
+                                    Icon(Icons.email, color: Colors.white),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          )
+                              : SizedBox.shrink(); // Return an empty widget if not on HomeScreen
+                        },
+                      ),
+                      // Tab Bar
+                      TabBar(
+                        controller: _tabController,
+                        indicatorColor: Color(0xc64d4dfa),
+                        labelColor: Color(0xc64d4dfa), // Color of the selected tab's text and icon
+                        unselectedLabelColor: Colors.grey,
+                        tabs: [
+                          Tab(icon: Icon(Icons.home)),
+                          Tab(icon: Icon(Icons.video_collection)),
+                          Tab(icon: Icon(Icons.person)),
+                          Tab(icon: Icon(Icons.shopping_cart)),
+                          Tab(icon: Icon(Icons.notifications)),
+                          Tab(icon: Icon(Icons.menu)),
+                        ],
+                      ),
+                      // Tab Content
+                      Expanded(
+                        child: TabBarView(
+                          controller: _tabController,
+                          children: [
+                            HomeScreen(), // Pass any required parameters
+                            MovieExplorerHomePage(), // Replace with your actual screens
+                            Pusoy13Game(),
+                            TikTokCloneApp(),
+                            NotificationScreen(),
+                            MenuScreen(),
                           ],
                         ),
-                        // Tab Content
-                        Expanded(
-                          child: TabBarView(
-                            children: [
-                              HomeScreen(), // Pass any required parameters
-                              MovieExplorerHomePage(), // Replace with your actual screens
-                              ProfileScreen(),
-                              TikTokCloneApp(),
-                              NotificationScreen(),
-                              MenuScreen(),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       ),

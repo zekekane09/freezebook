@@ -3,17 +3,10 @@ import 'movie.dart';
 import 'movie_list_view.dart';
 import 'movie_service.dart';
 
-class MovieExplorerApp extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      theme: ThemeData(primarySwatch: Colors.blue),
-      home: MovieExplorerHomePage(),
-    );
-  }
-}
 
 class MovieExplorerHomePage extends StatefulWidget {
+  const MovieExplorerHomePage({super.key});
+
   @override
   _MovieExplorerHomePageState createState() => _MovieExplorerHomePageState();
 }

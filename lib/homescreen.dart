@@ -21,8 +21,8 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Future<void> fetchVideosFromLocalStorage() async {
     List<String> imagePaths = [];
-    String _directoryPath = '/storage/emulated/0/DCIM/Camera';
-    Directory directory = Directory(_directoryPath);
+    String directoryPath = '/storage/emulated/0/DCIM/Camera';
+    Directory directory = Directory(directoryPath);
 
     if (await directory.exists()) {
       List<FileSystemEntity> files = directory.listSync(recursive: true);
@@ -207,7 +207,7 @@ class _FullscreenImageViewerState extends State<FullscreenImageViewer>
   late PageController _pageController;
   late Timer _timer;
   late AnimationController _animationController;
-  late Animation<double> _animation;
+  // late Animation<double> _animation;
   int _currentIndex = 0;
   final int _displayDuration = 10; // Duration to display each image in seconds
   bool _isPaused = false; // To track if the timer is paused
@@ -226,12 +226,12 @@ class _FullscreenImageViewerState extends State<FullscreenImageViewer>
       duration: Duration(seconds: _displayDuration),
     );
 
-    _animation = Tween<double>(begin: 1.0, end: 0.0).animate(_animationController)
-      ..addListener(() {
-        setState(() {
-          // This will update the UI with the current animation value
-        });
-      });
+    // _animation = Tween<double>(begin: 1.0, end: 0.0).animate(_animationController)
+    //   ..addListener(() {
+    //     setState(() {
+    //       // This will update the UI with the current animation value
+    //     });
+    //   });
 
     // Start the animation for the first image
     _animationController.forward();
