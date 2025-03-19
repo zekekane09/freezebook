@@ -78,7 +78,7 @@ class _LoginPageState extends State<LoginPage> {
     if (usernameController.text == username && passwordController.text == password) {
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (context) => SafeArea(child: Homepage(username: username))),
+        MaterialPageRoute(builder: (context) => Homepage(username: username)),
       );
     } else {
       // Show an error message

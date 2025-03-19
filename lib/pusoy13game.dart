@@ -1,7 +1,12 @@
 import 'dart:async';
 import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+
+import 'api_config.dart';
+import 'arrangeScreen.dart';
+import 'homepage.dart';
 
 void main() {
   SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky).then((_) {
@@ -25,6 +30,13 @@ class _Pusoy13GameState extends State<Pusoy13Game> {
   List<String> deck = [];
   List<List<String>> players = [[], [], [], []];
   bool isDealing = false;
+  late AnimationController _controller;
+  List<Animation<Offset>> _positionAnimations = [];
+  List<Animation<double>> _rotationAnimations = [];
+  final int _totalCards = 52;
+  bool _isAnimating = false;
+  bool isLoading = true;
+  bool hasError = false;
 
   @override
   void initState() {
@@ -33,17 +45,37 @@ class _Pusoy13GameState extends State<Pusoy13Game> {
   }
 
   void _initializeGame() {
-    deck = _generateDeck();
-    deck.shuffle(Random());
+    _fetchCards();
     setState(() {
       isDealing = true;
     });
-    _dealCardsWithAnimation();
+  }
+
+  void _fetchCards() async {
+    try {
+      List<String> fetchedDeck = await ApiService.getCards();
+      if (mounted) {
+        setState(() {
+          deck = fetchedDeck;
+          isLoading = false;
+        });
+        _dealCardsWithAnimation();  // Once cards are fetched, deal them
+      }
+    } catch (e) {
+      print("Error fetching deck: $e");
+      if (mounted) {
+        setState(() {
+          hasError = true;
+          isLoading = false;
+        });
+      }
+    }
   }
 
   Future<void> _dealCardsWithAnimation() async {
     List<List<String>> tempPlayers = [[], [], [], []];
 
+    // Deal cards to players
     for (int i = 0; i < 13; i++) {
       for (int j = 0; j < 4; j++) {
         if (deck.isNotEmpty) {
@@ -96,7 +128,11 @@ class _Pusoy13GameState extends State<Pusoy13Game> {
   }
 
   Widget _buildCard(String card, int playerIndex, int cardIndex) {
-    return Draggable<String>(
+    // Only allow dragging if the player is Player 1
+    bool isPlayerOne = playerIndex == 0;
+
+    return isPlayerOne
+        ? Draggable<String>(
       data: card,
       feedback: Card(
         shape: RoundedRectangleBorder(
@@ -105,7 +141,8 @@ class _Pusoy13GameState extends State<Pusoy13Game> {
         child: Container(
           width: 35, // Set the width of the card
           height: 40, // Set the height of the card
-          child: Text(card, style: TextStyle(fontSize: 16)), // Increase font size
+          child: Text(card,
+              style: TextStyle(fontSize: 16)), // Increase font size
         ),
       ),
       childWhenDragging: Container(), // Hide the card when dragging
@@ -116,7 +153,8 @@ class _Pusoy13GameState extends State<Pusoy13Game> {
             int draggedIndex = players[playerIndex].indexOf(data);
             // Swap the cards
             String temp = players[playerIndex][draggedIndex];
-            players[playerIndex][draggedIndex] = players[playerIndex][cardIndex];
+            players[playerIndex][draggedIndex] =
+            players[playerIndex][cardIndex];
             players[playerIndex][cardIndex] = temp;
           });
         },
@@ -128,16 +166,34 @@ class _Pusoy13GameState extends State<Pusoy13Game> {
             elevation: 3,
             child: Container(
               decoration: BoxDecoration(
-                border: Border.all(color: Colors.black, width: .3), // Add a black border
+                border: Border.all(color: Colors.black, width: .3),
+                // Add a black border
                 borderRadius: BorderRadius.zero, // No rounded corners
               ),
-
               width: 35, // Set the width of the card
               height: 40, // Set the height of the card
-              child: Text(card, style: TextStyle(fontSize: 16)), // Increase font size
+              child: Text(card,
+                  style: TextStyle(fontSize: 16)), // Increase font size
             ),
           );
         },
+      ),
+    )
+        : Card(
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.zero, // No rounded corners
+      ),
+      elevation: 3,
+      child: Container(
+        decoration: BoxDecoration(
+          border: Border.all(color: Colors.black, width: .3),
+          // Add a black border
+          borderRadius: BorderRadius.zero, // No rounded corners
+        ),
+        width: 35, // Set the width of the card
+        height: 40, // Set the height of the card
+        child: Text(card,
+            style: TextStyle(fontSize: 16)), // Increase font size
       ),
     );
   }
@@ -145,83 +201,135 @@ class _Pusoy13GameState extends State<Pusoy13Game> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Stack(
-        children: [
-          // Player 1 (Top)
-          Positioned(
-            left: MediaQuery.of(context).size.width / 2 - 100,
-            child: Column(
-              children: [
-                Text("Player 1"),
-                Container(
-                  height: 144,
-                  child: _buildPlayerHand(0),
-                ),
-              ],
+      body: Container(
+        decoration: BoxDecoration(
+          image: DecorationImage(
+              image: AssetImage('assets/images/gamebg.png'), fit: BoxFit.cover),
+        ),
+        child: Stack(
+          children: [
+            // Check if cards are loading
+            if (isLoading)
+              Center(child: CircularProgressIndicator()),
+
+            // Player 1 (Top)
+            Positioned(
+              top: 0,
+              left: 0,
+              child: Column(
+                children: [
+                  IconButton(
+                      icon: Image.asset('assets/images/game_back.webp', width: 40, height: 40),
+                      onPressed: () {
+                        Navigator.pushReplacement(
+                          context,
+                          MaterialPageRoute(builder: (context) => Homepage(username: "username")),
+                        );
+                      }),
+                ],
+              ),
             ),
-          ),
-          // Player 2 (Bottom)
-          Positioned(
-            top: 170,
-            left: MediaQuery.of(context).size.width / 2 - 100,
-            child: Column(
-              children: [
-                Text("Player 2"),
-                Container(
-                  height: 144,
-                  child: _buildPlayerHand(1),
-                ),
-              ],
+            // Player 2 (Bottom)
+            Positioned(
+              left: MediaQuery.of(context).size.width / 2 - 100,
+              child: Column(
+                children: [
+                  Text(
+                    "Player 2",
+                    style: TextStyle(color: Colors.amber, fontSize: 20),
+                  ),
+                  Container(
+                    height: 144,
+                    child: _buildPlayerHand(1),
+                  ),
+                ],
+              ),
             ),
-          ),
-          // Player 3 (Left)
-          Positioned(
-            left: 20,
-            top: MediaQuery.of(context).size.height / 2 - 100,
-            child: Column(
-              children: [
-                Text("Player 3"),
-                Container(
-                  height: 144,
-                  child: _buildPlayerHand(2),
-                ),
-              ],
+            Positioned(
+              top: 210,
+              left: MediaQuery.of(context).size.width / 2 - 100,
+              child: Column(
+                children: [
+                  Text(
+                    "Player 1",
+                    style: TextStyle(color: Colors.amber, fontSize: 20),
+                  ),
+                  Container(
+                    height: 300,
+                    child: _buildPlayerHand(0),
+                  ),
+                ],
+              ),
             ),
-          ),
-          // Player 4 (Right)
-          Positioned(
-            right: 20,
-            top: MediaQuery.of(context).size.height / 2 - 100,
-            child: Column(
-              children: [
-                Text("Player 4"),
-                Container(
-                  height: 144,
-                  child: _buildPlayerHand(3),
-                ),
-              ],
+            // Player 3 (Left)
+            Positioned(
+              left: 20,
+              top: MediaQuery.of(context).size.height / 2 - 100,
+              child: Column(
+                children: [
+                  Text(
+                    "Player 3",
+                    style: TextStyle(color: Colors.amber, fontSize: 20),
+                  ),
+                  Container(
+                    height: 144,
+                    child: _buildPlayerHand(2),
+                  ),
+                ],
+              ),
             ),
-          ),
-          // Card back image in the center
-          // Center(
-          //   heightFactor: 20,
-          //   child: Image.asset('assets/card_back.png', width: 10, height: 30),
-          // ),
-        ],
+            // Player 4 (Right)
+            Positioned(
+              right: 20,
+              top: MediaQuery.of(context).size.height / 2 - 100,
+              child: Column(
+                children: [
+                  Text(
+                    "Player 4",
+                    style: TextStyle(color: Colors.amber, fontSize: 20),
+                  ),
+                  Container(
+                    height: 144,
+                    child: _buildPlayerHand(3),
+                  ),
+                ],
+              ),
+            ),
+            // Card back image in the center
+            Center(
+                heightFactor: 100,
+                child: Container(
+                  width: 40,
+                  height: 60,
+                  decoration: BoxDecoration(
+                      image: DecorationImage(
+                          image: AssetImage('assets/images/card_back.png'),
+                          fit: BoxFit.cover)
+                  ),
+                )
+            ),
+          ],
+        ),
       ),
       floatingActionButton: Column(
         mainAxisAlignment: MainAxisAlignment.end,
         children: [
-          // ElevatedButton(
-          //   onPressed: () {
-          //     // Handle game state submission
-          //     print("Players' hands: $players");
-          //   },
-          //   child: Text('Submit'),
-          // ),
           ElevatedButton(
             onPressed: _initializeGame,
             child: Text('Restart Game'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              showDialog(
+                context: context,
+                builder: (BuildContext context) {
+                  return Dialog(
+                    child: StartDialog(playerCards: players[0]),
+                  );
+                },
+              );
+            },
+            child: Text('Start'),
           ),
         ],
       ),

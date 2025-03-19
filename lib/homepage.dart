@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart'; // Import for SystemChrome
+import 'package:freezebook/playersDistributionOneLine.dart';
 import 'package:freezebook/pusoy13game.dart';
 import 'package:freezebook/videoscrollerapp.dart';
+import 'game/distributecard.dart';
 import 'homescreen.dart'; // Ensure other screens are imported
 import 'loginpage.dart';
+import 'menuscreen.dart';
 import 'movie_explorer_app.dart';
 import 'notificationscreen.dart'; // Import your NotificationScreen
-import 'menuscreen.dart'; // Import your MenuScreen
 
 class Homepage extends StatefulWidget {
   final String? username;
@@ -37,16 +39,33 @@ class _HomepageState extends State<Homepage> with SingleTickerProviderStateMixin
   void _onTabChanged() {
     if (_tabController.index == 2) { // Pusoy13Game tab index
       // Set the system UI to fullscreen
-      SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+      SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (context) => SafeArea(child: Pusoy13Game())),
+        MaterialPageRoute(builder: (context) =>  Pusoy13Game()),
       );
-    } else {
+    } else if ((_tabController.index == 4)) {
+      SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) =>  DistributeCard()),
+      );
+    } else if ((_tabController.index == 5)){
+      SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) =>  PlayersDistributionOneLine()),
+      );
+    }
+
+
+
+    else {
       // Reset the system UI when leaving the Pusoy13Game tab
 
     }
   }
+
 
   @override
   Widget build(BuildContext context) {
@@ -113,11 +132,11 @@ class _HomepageState extends State<Homepage> with SingleTickerProviderStateMixin
                           controller: _tabController,
                           children: [
                             HomeScreen(), // Pass any required parameters
-                            MovieExplorerHomePage(), // Replace with your actual screens
+                            CreateGameScreen(), // Replace with your actual screens
                             Pusoy13Game(),
                             TikTokCloneApp(),
-                            NotificationScreen(),
-                            MenuScreen(),
+                            DistributeCard(),
+                            PlayersDistributionOneLine(),
                           ],
                         ),
                       ),
