@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:freezebook/homepage.dart';
+import 'api_config.dart';
+import 'data/baseresponse.dart';
 import 'signup.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'utils/sharedpreferencesextension.dart';
@@ -12,7 +14,7 @@ class LoginPage extends StatefulWidget {
 }
 
 class _LoginPageState extends State<LoginPage> {
-  final TextEditingController usernameController = TextEditingController();
+  final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
   late bool _isPasswordVisible = false;
   @override
@@ -72,13 +74,14 @@ class _LoginPageState extends State<LoginPage> {
   // }
   //
   void loginUser() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    String? username = prefs.getStringKey(SharedPreferencesKeys.username);
-    String? password = prefs.getStringKey(SharedPreferencesKeys.password);
-    if (usernameController.text == username && passwordController.text == password) {
+    // SharedPreferences prefs = await SharedPreferences.getInstance();
+    // String? email = prefs.getStringKey(SharedPreferencesKeys.email);
+    // String? password = prefs.getStringKey(SharedPreferencesKeys.password);
+    BaseResponse response = await ApiService.login(emailController.text, passwordController.text);
+    if (response.code == "SUCCESS") {
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (context) => Homepage(username: username)),
+        MaterialPageRoute(builder: (context) => Homepage()),
       );
     } else {
       // Show an error message
@@ -94,7 +97,7 @@ class _LoginPageState extends State<LoginPage> {
     String? password = prefs.getStringKey(SharedPreferencesKeys.password);
 
     if (username != null) {
-      usernameController.text = username;
+      emailController.text = username;
     }
     if (password != null) {
       passwordController.text = password;
@@ -130,9 +133,9 @@ class _LoginPageState extends State<LoginPage> {
             ),
             const SizedBox(height: 20),
             TextField(
-              controller: usernameController,
+              controller: emailController,
               decoration: InputDecoration(
-                labelText: 'Username',
+                labelText: 'Email',
                 labelStyle: TextStyle(color: Colors.white), // Change label color to white
                 enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(10.0), // Set the border radius for rounded corners

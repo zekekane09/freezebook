@@ -2,6 +2,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 
 enum SharedPreferencesKeys {
+  playerId,
   username,
   password,
 }

@@ -265,7 +265,9 @@ class _CardDistributionState extends State<DistributeCard> with TickerProviderSt
                   onPressed: () {
                     Navigator.pushReplacement(
                       context,
-                      MaterialPageRoute(builder: (context) => Homepage(username: "username")),
+                      MaterialPageRoute(builder: (context) => Homepage(
+                          // username: "username"
+                      )),
                     );
                   },
                 ),

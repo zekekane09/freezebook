@@ -105,15 +105,15 @@ class _SignUpPageState extends State<SignUpPage> {
       print("FCM Token: ${newUser .fcm_token}");
       print("Platform: ${newUser .platform}");
       BaseResponse response = await ApiService.createUser (newUser );
-      Fluttertoast.showToast(
-        msg: response.message,
-        toastLength: Toast.LENGTH_SHORT,
-        gravity: ToastGravity.BOTTOM,
-        timeInSecForIosWeb: 5,
-        backgroundColor: Colors.white,
-        textColor: Color(0xFF4d4dfa),
-        fontSize: 16.0,
-      );
+      // Fluttertoast.showToast(
+      //   msg: response.message,
+      //   toastLength: Toast.LENGTH_SHORT,
+      //   gravity: ToastGravity.BOTTOM,
+      //   timeInSecForIosWeb: 5,
+      //   backgroundColor: Colors.white,
+      //   textColor: Color(0xFF4d4dfa),
+      //   fontSize: 16.0,
+      // );
       if (response.code == "SUCCESS"){
         SharedPreferences prefs = await SharedPreferences.getInstance();
         await prefs.setStringKey(SharedPreferencesKeys.username, username);

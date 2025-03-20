@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart'; // Import for SystemChrome
 import 'package:freezebook/playersDistributionOneLine.dart';
 import 'package:freezebook/pusoy13game.dart';
+import 'package:freezebook/utils/sharedpreferencesextension.dart';
 import 'package:freezebook/videoscrollerapp.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'game/distributecard.dart';
 import 'homescreen.dart'; // Ensure other screens are imported
 import 'loginpage.dart';
@@ -11,9 +13,12 @@ import 'movie_explorer_app.dart';
 import 'notificationscreen.dart'; // Import your NotificationScreen
 
 class Homepage extends StatefulWidget {
-  final String? username;
+  // final String? email;    /// use this if needed
+  // final String? password;   /// use this if needed
 
-  const Homepage({super.key, required this.username});
+  const Homepage({super.key,
+    // required this.email,required this.password  /// use this if needed
+  });
 
   @override
   _HomepageState createState() => _HomepageState();
@@ -22,13 +27,16 @@ class Homepage extends StatefulWidget {
 class _HomepageState extends State<Homepage> with SingleTickerProviderStateMixin {
   late TabController _tabController;
 
+  get username => null;
+
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 6, vsync: this);
     _tabController.addListener(_onTabChanged);
+   
+    
   }
-
   @override
   void dispose() {
     _tabController.removeListener(_onTabChanged);
@@ -36,13 +44,16 @@ class _HomepageState extends State<Homepage> with SingleTickerProviderStateMixin
     super.dispose();
   }
 
-  void _onTabChanged() {
+  Future<void> _onTabChanged() async {
     if (_tabController.index == 2) { // Pusoy13Game tab index
       // Set the system UI to fullscreen
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      // String? playerId = prefs.getStringKey(SharedPreferencesKeys.playerId);
+      String? username = prefs.getStringKey(SharedPreferencesKeys.playerId);
       SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (context) =>  Pusoy13Game()),
+        MaterialPageRoute(builder: (context) =>  Pusoy13Game(username: username)),
       );
     } else if ((_tabController.index == 4)) {
       SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
@@ -69,6 +80,7 @@ class _HomepageState extends State<Homepage> with SingleTickerProviderStateMixin
 
   @override
   Widget build(BuildContext context) {
+    
     return WillPopScope(
       onWillPop: () async {
         // Prevent the app from closing
@@ -127,13 +139,16 @@ class _HomepageState extends State<Homepage> with SingleTickerProviderStateMixin
                         ],
                       ),
                       // Tab Content
+                      
                       Expanded(
                         child: TabBarView(
                           controller: _tabController,
                           children: [
                             HomeScreen(), // Pass any required parameters
                             CreateGameScreen(), // Replace with your actual screens
-                            Pusoy13Game(),
+                            Pusoy13Game(
+                              username: username,
+                            ),
                             TikTokCloneApp(),
                             DistributeCard(),
                             PlayersDistributionOneLine(),

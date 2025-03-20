@@ -4,7 +4,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:freezebook/api_config.dart'; // Ensure this is your actual API service
-import 'package:http/http.dart' as http; // Import http for API calls
+import 'package:freezebook/pusoy13game.dart';
+import 'package:freezebook/utils/sharedpreferencesextension.dart';
+import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
+
+import 'game/num_player_indicator.dart'; // Import http for API calls
 
 class CreateGameScreen extends StatefulWidget {
   @override
@@ -13,7 +18,7 @@ class CreateGameScreen extends StatefulWidget {
 
 class _CreateGameScreenState extends State<CreateGameScreen> {
   final TextEditingController gameNameController = TextEditingController();
-  Future<List<Map<String, dynamic>>>? futureGames;
+  late Future<List<Map<String, dynamic>>> futureGames;
   int _players = 0;
   bool isLoading = true;
   bool hasError = false;
@@ -22,11 +27,12 @@ class _CreateGameScreenState extends State<CreateGameScreen> {
     super.initState();
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.leanBack);
     _fetchPlayers();
-    ApiService.getNumberOfPlayerInRoom();
+    // ApiService.getNumberOfPlayerInRoom(30);
+    _loadGames();
   }
   Future<void> _loadGames() async {
     try {
-      futureGames = ApiService.getGames() as Future<List<Map<String, dynamic>>>?;
+      futureGames = ApiService.getGames() ;
       setState(() {}); // Trigger a rebuild to show the games
     } catch (e) {
       // Handle any errors that occur during the fetch
@@ -35,7 +41,7 @@ class _CreateGameScreenState extends State<CreateGameScreen> {
   }
   void _fetchPlayers() async {
     try {
-      int fetchedPlayers = await ApiService.getNumberOfPlayerInRoom();
+      int fetchedPlayers = await ApiService.getPlayerInRoom(2);
       if (mounted) {
         setState(() {
           _players = fetchedPlayers;
@@ -59,8 +65,67 @@ class _CreateGameScreenState extends State<CreateGameScreen> {
     gameNameController.dispose(); // Dispose of the controller
     super.dispose();
   }
-  Future<void> _joingame(int Gameid) async {
-    String response = await ApiService.joinGame(8,Gameid);
+  Future<void> _joingame(int games_id) async {
+    // int currentPlayers = await ApiService.getPlayerInRoom(games_id);
+    // String response = await ApiService.joinGame(games_id,games_id);
+    // SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
+    // Navigator.pushReplacement(
+    //   context,
+    //   MaterialPageRoute(builder: (context) =>  Pusoy13Game()),
+    // );
+    try {
+      // Fetch the current number of players in the room
+      int currentPlayers = await ApiService.getPlayerInRoom(games_id);
+
+      // Determine the player name based on the current number of players
+      String playerName;
+      if (currentPlayers == 0) {
+        playerName = "Player 1"; // First player
+      } else if (currentPlayers == 1) {
+        playerName = "Player 2"; // Second player
+      } else if (currentPlayers == 2) {
+        playerName = "Player 3"; // Third player
+      } else if (currentPlayers == 3) {
+        playerName = "Player 4"; // Fourth player
+      } else {
+        // If the game is full, you might want to handle this case
+        Fluttertoast.showToast(
+          msg: "The game is full. You cannot join.",
+          toastLength: Toast.LENGTH_SHORT,
+          gravity: ToastGravity.BOTTOM,
+          timeInSecForIosWeb: 5,
+          backgroundColor: Colors.red,
+          textColor: Colors.white,
+          fontSize: 16.0,
+        );
+        return; // Exit the function if the game is full
+      }
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      String? playerId = prefs.getStringKey(SharedPreferencesKeys.playerId);
+      String? username = prefs.getStringKey(SharedPreferencesKeys.playerId);
+      print("PLAYER ID: $playerId");
+      // Join the game with the determined player name
+      String response = await ApiService.joinGame(playerId!, games_id);
+      print("Join Game Response: $response");
+
+      // Navigate to the game screen
+      SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => Pusoy13Game(username: username)),
+      );
+    } catch (e) {
+      print("Error joining game: $e");
+      Fluttertoast.showToast(
+        msg: "Failed to join game: $e",
+        toastLength: Toast.LENGTH_SHORT,
+        gravity: ToastGravity.BOTTOM,
+        timeInSecForIosWeb: 5,
+        backgroundColor: Colors.red,
+        textColor: Colors.white,
+        fontSize: 16.0,
+      );
+    }
   }
   Future<void> _createNewGame() async {
     if (gameNameController.text.isEmpty) {
@@ -119,7 +184,8 @@ class _CreateGameScreenState extends State<CreateGameScreen> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text('Game List'),
+          title: const
+          Text('Game List'),
           content: SingleChildScrollView(
             child: FutureBuilder<List<Map<String, dynamic>>>(
               future: futureGames,
@@ -148,7 +214,7 @@ class _CreateGameScreenState extends State<CreateGameScreen> {
                               BoxShadow(
                                 color: Colors.black26,
                                 blurRadius: 4.0,
-                                offset: Offset(0, 2), // changes position of shadow
+                                offset: const Offset(0, 2), // changes position of shadow
                               ),
                             ],
                           ),
@@ -158,12 +224,30 @@ class _CreateGameScreenState extends State<CreateGameScreen> {
                               Expanded(
                                 child: Text(
                                   game["game_name"] ?? "Unknown Game",
-                                  style: const TextStyle(fontWeight: FontWeight.bold),
+                                  style: const TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                    fontSize: 15
+                                  ),
                                 ),
                               ),
-                              const SizedBox(width: 8.0), // Space between name and status
+                              // const SizedBox(width: 8.0), // Space between name and status
                               Text(game["status"] ?? "Unknown Status"),
-                              Text(game[_players])
+                              SizedBox(width: 10,),
+                              // Assuming you have a key for player count, replace 'player_count' with the actual key
+                              FutureBuilder<int>(
+                                future: ApiService.getPlayerInRoom(game["id"]), // Pass the game ID
+                                builder: (context, playerSnapshot) {
+                                  if (playerSnapshot.connectionState == ConnectionState.waiting) {
+                                    return const CircularProgressIndicator(); // Show loading indicator
+
+                                  } else {
+                                    // Display the number of players in the GamePlayerIndicator
+                                    return GamePlayerIndicator(
+                                      currentPlayers: playerSnapshot.data ?? 0, // Use the fetched player count
+                                    );
+                                  }
+                                },
+                              ), // Display player count
                             ],
                           ),
                         ),

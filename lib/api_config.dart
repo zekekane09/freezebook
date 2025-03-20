@@ -31,7 +31,7 @@ class ApiService {
           "id": game["id"],
           "game_name": game["game_name"] ?? "Unknown Game",
           "status": game["status"] ?? "Unknown Status",
-          "created_at": game["created_at"],
+          "created_at": game["created_at"]?? 0,
         };
       }).toList();
       return games; // Return the list of games on success
@@ -64,7 +64,7 @@ class ApiService {
       throw Exception("Failed to create game: ${response.body}");
     }
   }
-  static Future<String> joinGame(int playerId, int gameId) async {
+  static Future<String> joinGame(String playerId, int gameId) async {
     final url = "$baseUrl/api:oMkvQ-3B/players/$playerId";
     final body = jsonEncode({"games_id": gameId});
 
@@ -95,10 +95,10 @@ class ApiService {
       throw Exception("Failed to join game: ${response.body}");
     }
   }
-  static Future<int> getNumberOfPlayerInRoom(int games_id) async {
+  static Future<int> getPlayerInRoom(int games_id) async {
 
     final url = "$baseUrl/api:oMkvQ-3B/game/fetch_players";
-    final body = jsonEncode({"games_id": 31});
+    final body = jsonEncode({"games_id": games_id});
     print("🔹 [NUMBER OF PLAYER IN ROOM] Sending Request: $url");
     print("🔹 Headers: { Content-Type: application/json }");
     print("🔹 Body: $body");
@@ -166,10 +166,12 @@ class ApiService {
       throw Exception("Error fetching shuffled deck");
     }
   }
-
+  // https://x8ki-letl-twmt.n7.xano.io/api:oMkvQ-3B/players/login
   /// Creates a new user
   static Future<BaseResponse> createUser(User user) async {
-    final url = "$baseUrl/api:ktP3aUwj/auth/signup";
+    https://x8ki-letl-twmt.n7.xano.io/api:oMkvQ-3B/players
+    final url = "$baseUrl/api:oMkvQ-3B/players/login";
+    // final url = "$baseUrl/api:ktP3aUwj/auth/signup";
     final body = jsonEncode(user.toJson());
     print("🔹 [CREATE USER] Sending Request: $url");
     print("🔹 Headers: { Content-Type: application/json }");
@@ -187,12 +189,15 @@ class ApiService {
     final Map<String, dynamic> responseData = jsonDecode(response.body);
 
     if (response.statusCode == 200) {
+      final userData = responseData["user"];
+      int playerId = userData["id"];
+      String username = userData["username"];
       String authToken = responseData["authToken"];
-      await _saveAuthToken(authToken);
+      await _saveAuthToken(authToken,"$playerId",username);
       return BaseResponse(
         code: "SUCCESS",
         message: "User created successfully.",
-        payload: authToken,
+        payload: "authToken",
       );
     } else {
       return BaseResponse(
@@ -202,12 +207,55 @@ class ApiService {
       );
     }
   }
+  static Future<BaseResponse> login(String email,String password) async {
+    https://x8ki-letl-twmt.n7.xano.io/api:oMkvQ-3B/players/login
+    final url = "$baseUrl/api:oMkvQ-3B/players/login";
+    // final url = "$baseUrl/api:ktP3aUwj/auth/signup";
+    final body = jsonEncode({"email": email,"password": password});
+    print("🔹 [CREATE USER] Sending Request: $url");
+    print("🔹 Headers: { Content-Type: application/json }");
+    print("🔹 Body: $body");
 
+    final response = await http.post(
+      Uri.parse(url),
+      headers: {"Content-Type": "application/json"},
+      body: body,
+    );
+
+    print("🔹 Response Status: ${response.statusCode}");
+    print("🔹 Response Body: ${response.body}");
+
+    final Map<String, dynamic> responseData = jsonDecode(response.body);
+
+    if (response.statusCode == 200) {
+      final userData = responseData["user"];
+      int playerId = userData["id"];
+      String username = userData["username"];
+      String authToken = responseData["authToken"];
+      await _saveAuthToken(authToken,"$playerId",username);
+      return BaseResponse(
+        code: "SUCCESS",
+        message: "User created successfully.",
+        payload: "authToken",
+      );
+    } else {
+      return BaseResponse(
+        code: responseData["code"] ?? "UNKNOWN_ERROR",
+        message: responseData["message"] ?? "An unknown error occurred.",
+        payload: responseData["payload"],
+      );
+    }
+  }
   /// Saves auth token in SharedPreferences
-  static Future<void> _saveAuthToken(String token) async {
+  static Future<void> _saveAuthToken(String authToken,String playerId,String username) async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
-    await prefs.setString('authToken', token);
-    print("🔹 Auth token saved: $token");
+     await prefs.setString('authToken', authToken);
+    await prefs.setString('playerId', playerId);
+    await prefs.setString('username', username);
+    // print("🔹 Auth token saved: $token");
+    print("🔹 AuthToken saved: $authToken");
+    print("🔹 PlayerId saved: $playerId");
+    print("🔹 Username saved: $username");
   }
 
   /// Retrieves auth token from SharedPreferences

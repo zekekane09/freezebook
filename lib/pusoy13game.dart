@@ -3,24 +3,30 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:freezebook/utils/sharedpreferencesextension.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'api_config.dart';
 import 'arrangeScreen.dart';
 import 'homepage.dart';
 
-void main() {
-  SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky).then((_) {
-    SystemChrome.setPreferredOrientations([
-      DeviceOrientation.landscapeLeft,
-      DeviceOrientation.landscapeRight,
-    ]).then((_) {
-      runApp(const Pusoy13Game());
-    });
-  });
-}
+// void main() {
+//   SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky).then((_) {
+//     SystemChrome.setPreferredOrientations([
+//       DeviceOrientation.landscapeLeft,
+//       DeviceOrientation.landscapeRight,
+//     ]).then((_) {
+//       runApp(const Pusoy13Game(
+//
+//       ));
+//     });
+//   });
+// }
 
 class Pusoy13Game extends StatefulWidget {
-  const Pusoy13Game({super.key});
+
+  final String? username;
+  const Pusoy13Game({super.key,required this.username});
 
   @override
   _Pusoy13GameState createState() => _Pusoy13GameState();
@@ -37,14 +43,27 @@ class _Pusoy13GameState extends State<Pusoy13Game> {
   bool _isAnimating = false;
   bool isLoading = true;
   bool hasError = false;
+ 
+  final Map<String, String> suitIcons = {
+    'S': '\u2660', // Spades
+    'D': '\u2666', // Diamonds
+    'H': '\u2665', // Hearts
+    'C': '\u2663', // Clubs
+  };
 
+  String? username;
+
+
+  
   @override
   void initState() {
     super.initState();
     _initializeGame();
   }
 
-  void _initializeGame() {
+  Future<void> _initializeGame() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+     username = prefs.getStringKey(SharedPreferencesKeys.username);
     _fetchCards();
     setState(() {
       isDealing = true;
@@ -52,8 +71,11 @@ class _Pusoy13GameState extends State<Pusoy13Game> {
   }
 
   void _fetchCards() async {
+    
     try {
       List<String> fetchedDeck = await ApiService.getCards();
+
+
       if (mounted) {
         setState(() {
           deck = fetchedDeck;
@@ -90,6 +112,17 @@ class _Pusoy13GameState extends State<Pusoy13Game> {
       isDealing = false;
     });
   }
+  // Card? parseCard(String input) {
+  //   if (input.length < 2) return null; // Invalid input
+  //
+  //   String value = input.substring(0, input.length - 1); // Get the value
+  //   String suit = input[input.length - 1]; // Get the suit
+  //
+  //   // Validate the suit
+  //   if (!['S', 'D', 'H', 'C'].contains(suit)) return null;
+  //
+  //   return Card(value, suit);
+  // }
 
   List<String> _generateDeck() {
     List<String> suits = ['\u2660', '\u2665', '\u2666', '\u2663'];
@@ -130,7 +163,21 @@ class _Pusoy13GameState extends State<Pusoy13Game> {
   Widget _buildCard(String card, int playerIndex, int cardIndex) {
     // Only allow dragging if the player is Player 1
     bool isPlayerOne = playerIndex == 0;
-
+    String rank = card.substring(0, card.length - 1);
+    String suit = card[card.length - 1];
+    String suitIcon = suitIcons[suit] ?? suit;
+    TextSpan suitTextSpan;
+    if (suit == 'H') {
+      suitTextSpan = TextSpan(
+        text: suitIcon,
+        style: TextStyle(fontSize : 16,color:  Color(0xFFFF1200)), // Red color for hearts
+      );
+    } else {
+      suitTextSpan = TextSpan(
+        text: suitIcon,
+        style: TextStyle(fontSize : 16,color: Colors.black), // Default color for other suits
+      );
+    }
     return isPlayerOne
         ? Draggable<String>(
       data: card,
@@ -141,8 +188,17 @@ class _Pusoy13GameState extends State<Pusoy13Game> {
         child: Container(
           width: 35, // Set the width of the card
           height: 40, // Set the height of the card
-          child: Text(card,
-              style: TextStyle(fontSize: 16)), // Increase font size
+          child: RichText(
+            text: TextSpan(
+              children: [
+                TextSpan(
+                  text: rank,
+                  style: TextStyle(fontSize: 14, color: Colors.black), // Default color for rank
+                ),
+                suitTextSpan, // Add the suit TextSpan
+              ],
+            ),
+          )// Increase font size
         ),
       ),
       childWhenDragging: Container(), // Hide the card when dragging
@@ -172,8 +228,17 @@ class _Pusoy13GameState extends State<Pusoy13Game> {
               ),
               width: 35, // Set the width of the card
               height: 40, // Set the height of the card
-              child: Text(card,
-                  style: TextStyle(fontSize: 16)), // Increase font size
+              child: RichText(
+                text: TextSpan(
+                  children: [
+                    TextSpan(
+                      text: rank,
+                      style: TextStyle(fontSize: 14, color: Colors.black), // Default color for rank
+                    ),
+                    suitTextSpan, // Add the suit TextSpan
+                  ],
+                ),
+              )// Increase font size
             ),
           );
         },
@@ -192,8 +257,17 @@ class _Pusoy13GameState extends State<Pusoy13Game> {
         ),
         width: 35, // Set the width of the card
         height: 40, // Set the height of the card
-        child: Text(card,
-            style: TextStyle(fontSize: 16)), // Increase font size
+        child: RichText(
+          text: TextSpan(
+            children: [
+              TextSpan(
+                text: rank,
+                style: TextStyle(fontSize: 14, color: Colors.black), // Default color for rank
+              ),
+              suitTextSpan, // Add the suit TextSpan
+            ],
+          ),
+        )// Increase font size
       ),
     );
   }
@@ -223,7 +297,9 @@ class _Pusoy13GameState extends State<Pusoy13Game> {
                       onPressed: () {
                         Navigator.pushReplacement(
                           context,
-                          MaterialPageRoute(builder: (context) => Homepage(username: "username")),
+                          MaterialPageRoute(builder: (context) => Homepage(
+                              // username: "username"
+                          )),
                         );
                       }),
                 ],
@@ -251,7 +327,7 @@ class _Pusoy13GameState extends State<Pusoy13Game> {
               child: Column(
                 children: [
                   Text(
-                    "Player 1",
+                    username!,
                     style: TextStyle(color: Colors.amber, fontSize: 20),
                   ),
                   Container(
@@ -296,18 +372,18 @@ class _Pusoy13GameState extends State<Pusoy13Game> {
               ),
             ),
             // Card back image in the center
-            Center(
-                heightFactor: 100,
-                child: Container(
-                  width: 40,
-                  height: 60,
-                  decoration: BoxDecoration(
-                      image: DecorationImage(
-                          image: AssetImage('assets/images/card_back.png'),
-                          fit: BoxFit.cover)
-                  ),
-                )
-            ),
+            // Center(
+            //     heightFactor: 100,
+            //     child: Container(
+            //       width: 40,
+            //       height: 60,
+            //       decoration: BoxDecoration(
+            //           image: DecorationImage(
+            //               image: AssetImage('assets/images/card_back.png'),
+            //               fit: BoxFit.cover)
+            //       ),
+            //     )
+            // ),
           ],
         ),
       ),

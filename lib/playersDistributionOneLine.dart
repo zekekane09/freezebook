@@ -275,7 +275,9 @@ class _PlayersDistributionOneLine extends State<PlayersDistributionOneLine>
                     Navigator.pushReplacement(
                       context,
                       MaterialPageRoute(builder: (_) =>
-                      const Homepage(username: "username")),
+                      const Homepage(
+                          // username: "username"
+                      )),
                     ),
               ),
             ),

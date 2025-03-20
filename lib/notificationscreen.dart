@@ -102,7 +102,9 @@ class _CardDistributionState extends State<CardDistribution>
                     onPressed: () {
                       Navigator.pushReplacement(
                         context,
-                        MaterialPageRoute(builder: (context) => Homepage(username: "username")),
+                        MaterialPageRoute(builder: (context) => Homepage(
+                            // username: "username"
+                        )),
                       );
                     }),
               ],
