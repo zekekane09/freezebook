@@ -11,7 +11,12 @@ class StartDialog extends StatefulWidget {
 
 class _StartDialogState extends State<StartDialog> {
   late List<String> arrangedCards;
-
+  final Map<String, String> suitIcons = {
+    'S': '\u2660', // Spades
+    'D': '\u2666', // Diamonds
+    'H': '\u2665', // Hearts
+    'C': '\u2663', // Clubs
+  };
   @override
   void initState() {
     super.initState();
@@ -20,6 +25,7 @@ class _StartDialogState extends State<StartDialog> {
 
   @override
   Widget build(BuildContext context) {
+
     return WillPopScope(
       onWillPop: () async => true, // Allow back navigation
       child: Stack(children: [
@@ -98,6 +104,21 @@ class _StartDialogState extends State<StartDialog> {
   }
 
   Widget _cardWidget(String card, {bool isDragging = false}) {
+    String rank = card.substring(0, card.length - 1);
+    String suit = card[card.length - 1];
+    String suitIcon = suitIcons[suit] ?? suit;
+    TextSpan suitTextSpan;
+    if (suit == 'H') {
+      suitTextSpan = TextSpan(
+        text: suitIcon,
+        style: TextStyle(fontSize : 16,color:  Color(0xFFFF1200)), // Red color for hearts
+      );
+    } else {
+      suitTextSpan = TextSpan(
+        text: suitIcon,
+        style: TextStyle(fontSize : 16,color: Colors.black), // Default color for other suits
+      );
+    }
     return Card(
       elevation: isDragging ? 8 : 3,
       child: Container(
@@ -105,14 +126,24 @@ class _StartDialogState extends State<StartDialog> {
         // Adjusted width to fit better
         height: 75,
         // Adjusted height to fit better
-        alignment: Alignment.center,
+        alignment: Alignment.topLeft,
         decoration: BoxDecoration(
           border: Border.all(color: Colors.black, width: 0.5),
           borderRadius: BorderRadius.circular(5),
         ),
-        child: Text(
-          card,
-          style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+
+        child:
+        RichText(
+          text: TextSpan(
+            children: [
+              TextSpan(
+                text: rank,
+                style: TextStyle(fontSize: 18, color: Colors.black), // Default color for rank
+              ),
+              suitTextSpan, // Add the suit TextSpan
+            ],
+          )
+
         ),
       ),
     );

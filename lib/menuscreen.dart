@@ -26,38 +26,21 @@ class _CreateGameScreenState extends State<CreateGameScreen> {
   void initState() {
     super.initState();
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.leanBack);
-    _fetchPlayers();
+
     // ApiService.getNumberOfPlayerInRoom(30);
     _loadGames();
   }
   Future<void> _loadGames() async {
     try {
       futureGames = ApiService.getGames() ;
-      setState(() {}); // Trigger a rebuild to show the games
+      setState(() {
+      }); // Trigger a rebuild to show the games
     } catch (e) {
       // Handle any errors that occur during the fetch
       print("Error loading games: $e");
     }
   }
-  void _fetchPlayers() async {
-    try {
-      int fetchedPlayers = await ApiService.getPlayerInRoom(2);
-      if (mounted) {
-        setState(() {
-          _players = fetchedPlayers;
-          isLoading = false;
-        });
-      }
-    } catch (e) {
-      print("Error fetching players: $e");
-      if (mounted) {
-        setState(() {
-          hasError = true;
-          isLoading = false;
-        });
-      }
-    }
-  }
+
   @override
   void dispose() {
     // Restore the system UI when leaving the screen
@@ -75,31 +58,31 @@ class _CreateGameScreenState extends State<CreateGameScreen> {
     // );
     try {
       // Fetch the current number of players in the room
-      int currentPlayers = await ApiService.getPlayerInRoom(games_id);
-
-      // Determine the player name based on the current number of players
-      String playerName;
-      if (currentPlayers == 0) {
-        playerName = "Player 1"; // First player
-      } else if (currentPlayers == 1) {
-        playerName = "Player 2"; // Second player
-      } else if (currentPlayers == 2) {
-        playerName = "Player 3"; // Third player
-      } else if (currentPlayers == 3) {
-        playerName = "Player 4"; // Fourth player
-      } else {
-        // If the game is full, you might want to handle this case
-        Fluttertoast.showToast(
-          msg: "The game is full. You cannot join.",
-          toastLength: Toast.LENGTH_SHORT,
-          gravity: ToastGravity.BOTTOM,
-          timeInSecForIosWeb: 5,
-          backgroundColor: Colors.red,
-          textColor: Colors.white,
-          fontSize: 16.0,
-        );
-        return; // Exit the function if the game is full
-      }
+      // int currentPlayers = await ApiService.getPlayerInRoom(games_id);
+      //
+      // // Determine the player name based on the current number of players
+      // String playerName;
+      // if (currentPlayers == 0) {
+      //   playerName = "Player 1"; // First player
+      // } else if (currentPlayers == 1) {
+      //   playerName = "Player 2"; // Second player
+      // } else if (currentPlayers == 2) {
+      //   playerName = "Player 3"; // Third player
+      // } else if (currentPlayers == 3) {
+      //   playerName = "Player 4"; // Fourth player
+      // } else {
+      //   // If the game is full, you might want to handle this case
+      //   Fluttertoast.showToast(
+      //     msg: "The game is full. You cannot join.",
+      //     toastLength: Toast.LENGTH_SHORT,
+      //     gravity: ToastGravity.BOTTOM,
+      //     timeInSecForIosWeb: 5,
+      //     backgroundColor: Colors.red,
+      //     textColor: Colors.white,
+      //     fontSize: 16.0,
+      //   );
+      //   return; // Exit the function if the game is full
+      // }
       SharedPreferences prefs = await SharedPreferences.getInstance();
       String? playerId = prefs.getStringKey(SharedPreferencesKeys.playerId);
       String? username = prefs.getStringKey(SharedPreferencesKeys.playerId);
@@ -234,20 +217,9 @@ class _CreateGameScreenState extends State<CreateGameScreen> {
                               Text(game["status"] ?? "Unknown Status"),
                               SizedBox(width: 10,),
                               // Assuming you have a key for player count, replace 'player_count' with the actual key
-                              FutureBuilder<int>(
-                                future: ApiService.getPlayerInRoom(game["id"]), // Pass the game ID
-                                builder: (context, playerSnapshot) {
-                                  if (playerSnapshot.connectionState == ConnectionState.waiting) {
-                                    return const CircularProgressIndicator(); // Show loading indicator
-
-                                  } else {
-                                    // Display the number of players in the GamePlayerIndicator
-                                    return GamePlayerIndicator(
-                                      currentPlayers: playerSnapshot.data ?? 0, // Use the fetched player count
-                                    );
-                                  }
-                                },
-                              ), // Display player count
+                        GamePlayerIndicator(
+                          currentPlayers: game["_players_of_games"], // Use the fetched player count
+                        )
                             ],
                           ),
                         ),

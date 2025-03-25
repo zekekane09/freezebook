@@ -32,6 +32,7 @@ class ApiService {
           "game_name": game["game_name"] ?? "Unknown Game",
           "status": game["status"] ?? "Unknown Status",
           "created_at": game["created_at"]?? 0,
+          "_players_of_games": game["_players_of_games"]?? 0,
         };
       }).toList();
       return games; // Return the list of games on success
@@ -95,50 +96,50 @@ class ApiService {
       throw Exception("Failed to join game: ${response.body}");
     }
   }
-  static Future<int> getPlayerInRoom(int games_id) async {
-
-    final url = "$baseUrl/api:oMkvQ-3B/game/fetch_players";
-    final body = jsonEncode({"games_id": games_id});
-    print("🔹 [NUMBER OF PLAYER IN ROOM] Sending Request: $url");
-    print("🔹 Headers: { Content-Type: application/json }");
-    print("🔹 Body: $body");
-
-    try {
-      final response = await http.post(
-        Uri.parse(url),
-        headers: {"Content-Type": "application/json"},
-        body: body,
-      );
-
-      print("🔹 Response Status: ${response.statusCode}");
-      print("🔹 Response Body: ${response.body}");
-
-      if (response.statusCode == 200) {
-        final Map<String, dynamic> jsonResponse = jsonDecode(response.body);
-
-        // Check if the "Players" key exists and return the list of players
-        if (jsonResponse.containsKey("Players")) {
-          final List<dynamic> players = jsonResponse["Players"];
-          final int numberOfPlayers = players.length; // Get the number of players
-          print("Number of players: $numberOfPlayers");
-
-          return numberOfPlayers;
-        } else {
-          throw Exception("Response does not contain 'Players' key");
-        }
-      } else {
-        throw Exception("Failed to fetch players: ${response.statusCode} - ${response.body}");
-      }
-    } catch (e) {
-      print("❌ Error fetching players: $e");
-      throw Exception("Error fetching players: $e");
-    }
-  }
+  // static Future<int> getPlayerInRoom(int games_id) async {
+  //
+  //   final url = "$baseUrl/api:oMkvQ-3B/game/fetch_players";
+  //   final body = jsonEncode({"games_id": games_id});
+  //   print("🔹 [NUMBER OF PLAYER IN ROOM] Sending Request: $url");
+  //   print("🔹 Headers: { Content-Type: application/json }");
+  //   print("🔹 Body: $body");
+  //
+  //   try {
+  //     final response = await http.post(
+  //       Uri.parse(url),
+  //       headers: {"Content-Type": "application/json"},
+  //       body: body,
+  //     );
+  //
+  //     print("🔹 Response Status: ${response.statusCode}");
+  //     print("🔹 Response Body: ${response.body}");
+  //
+  //     if (response.statusCode == 200) {
+  //       final Map<String, dynamic> jsonResponse = jsonDecode(response.body);
+  //
+  //       // Check if the "Players" key exists and return the list of players
+  //       if (jsonResponse.containsKey("Players")) {
+  //         final List<dynamic> players = jsonResponse["Players"];
+  //         final int numberOfPlayers = players.length; // Get the number of players
+  //         print("Number of players: $numberOfPlayers");
+  //
+  //         return numberOfPlayers;
+  //       } else {
+  //         throw Exception("Response does not contain 'Players' key");
+  //       }
+  //     } else {
+  //       throw Exception("Failed to fetch players: ${response.statusCode} - ${response.body}");
+  //     }
+  //   } catch (e) {
+  //     print("❌ Error fetching players: $e");
+  //     throw Exception("Error fetching players: $e");
+  //   }
+  // }
 
   /// Fetch shuffled deck of cards
   static Future<List<String>> getCards() async {
     final url = "$baseUrl/api:oMkvQ-3B/game/shuffle_and_deal";
-    final body = jsonEncode({"games_id": 32});
+    final body = jsonEncode({"games_id": 31});
 
     print("🔹 [GET CARDS] Sending Request: $url");
     print("🔹 Headers: { Content-Type: application/json }");
@@ -169,8 +170,9 @@ class ApiService {
   // https://x8ki-letl-twmt.n7.xano.io/api:oMkvQ-3B/players/login
   /// Creates a new user
   static Future<BaseResponse> createUser(User user) async {
-    https://x8ki-letl-twmt.n7.xano.io/api:oMkvQ-3B/players
-    final url = "$baseUrl/api:oMkvQ-3B/players/login";
+    // https://x8ki-letl-twmt.n7.xano.io/api:oMkvQ-3B/players
+    // https://x8ki-letl-twmt.n7.xano.io/api:oMkvQ-3B/players
+    final url = "$baseUrl/api:oMkvQ-3B/players";
     // final url = "$baseUrl/api:ktP3aUwj/auth/signup";
     final body = jsonEncode(user.toJson());
     print("🔹 [CREATE USER] Sending Request: $url");
