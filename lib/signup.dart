@@ -116,7 +116,7 @@ class _SignUpPageState extends State<SignUpPage> {
       // );
       if (response.code == "SUCCESS"){
         SharedPreferences prefs = await SharedPreferences.getInstance();
-        await prefs.setStringKey(SharedPreferencesKeys.username, username);
+        await prefs.setStringKey(SharedPreferencesKeys.email, email);
         await prefs.setStringKey(SharedPreferencesKeys.password, password);
         // Navigate to LoginPage or handle post-signup logic
         Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => LoginPage()));

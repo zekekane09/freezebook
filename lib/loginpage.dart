@@ -93,7 +93,7 @@ class _LoginPageState extends State<LoginPage> {
 
   void _loadCredentials() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
-    String? username = prefs.getStringKey(SharedPreferencesKeys.username);
+    String? username = prefs.getStringKey(SharedPreferencesKeys.email);
     String? password = prefs.getStringKey(SharedPreferencesKeys.password);
 
     if (username != null) {

@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:math';
 
 import 'package:flutter/material.dart';
 
@@ -15,6 +14,7 @@ class DistributeCard extends StatefulWidget {
 class _CardDistributionState extends State<DistributeCard>
     with TickerProviderStateMixin {
   late AnimationController _controller;
+  late AnimationController _flipController;
   List<List<String>> players = [[], [], [], []];
   List<Animation<Offset>> _positionAnimations = [];
   List<Animation<double>> _rotationAnimations = [];
@@ -22,32 +22,42 @@ class _CardDistributionState extends State<DistributeCard>
   bool isLoading = true;
   bool hasError = false;
   bool _isAnimating = false;
+  bool _isFlipping = false; // New flag for flipping animation
   final int _totalCards = 52; // Total number of cards
   final int timer = 60; // Total number of cards
   final int _numberOfPlayers = 4; // Number of players
-  final Map<String, String> suitIcons = {
-    'S': '\u2660', // Spades
-    'D': '\u2666', // Diamonds
-    'H': '\u2665', // Hearts
-    'C': '\u2663', // Clubs
-  };
-  int countdown = 2; // Countdown duration
+  int countdown = 10; // Countdown duration
   Timer? _timer; // Timer instance
   bool showOtherPlayersCards = false; // Flag to show other players' cards
 
   @override
   void initState() {
     super.initState();
-    // _deck = _generateDeck();
-    // _deck.shuffle(Random());
-    // Generate deck of cards
     _fetchCards();
+  }
 
+  void _triggerFlipAnimation() {
+    if (!_isFlipping) {
+      setState(() => _isFlipping = true);
+      _flipController = AnimationController(
+        vsync: this,
+        duration: Duration(seconds: 1),
+      );
 
+      // Flip animation logic
+      _flipController.forward().whenComplete(() {
+        setState(() => _isFlipping = false);
+        _flipController.dispose();
+      });
+    }
   }
 
   void _fetchCards() async {
     try {
+      setState(() {
+        isLoading = true;
+        hasError = false; // Reset error state
+      });
       List<String> fetchedDeck = await ApiService.getCards();
       _controller = AnimationController(
         vsync: this,
@@ -56,10 +66,8 @@ class _CardDistributionState extends State<DistributeCard>
 
       // Initialize animations for all cards
       _initializeAnimations();
-      _controller.addListener(() =>
-          setState(() {
+      _controller.addListener(() => setState(() {}));
 
-          }));
       if (mounted) {
         setState(() {
           _deck = fetchedDeck;
@@ -79,7 +87,9 @@ class _CardDistributionState extends State<DistributeCard>
       }
     }
   }
+
   void _startCountdown() {
+    // countdown = 10; // Reset countdown to initial value
     _timer = Timer.periodic(Duration(seconds: 1), (timer) {
       if (countdown > 0) {
         setState(() {
@@ -88,10 +98,25 @@ class _CardDistributionState extends State<DistributeCard>
       } else {
         timer.cancel();
         setState(() {
-          showOtherPlayersCards = true; // Show other players' cards after countdown
+          showOtherPlayersCards = true;
+          _triggerFlipAnimation();
         });
       }
     });
+  }
+  void _resetGame() {
+    // Reset all relevant variables and states
+    setState(() {
+      players = [[], [], [], []]; // Clear players' hands
+      _deck.clear(); // Clear the deck
+      countdown = 10; // Reset countdown
+      showOtherPlayersCards = false; // Reset visibility of other players' cards
+      isLoading = true; // Set loading state to true
+      hasError = false; // Reset error state
+      _timer?.cancel(); // Cancel any existing timer
+      _controller.reset(); // Reset animation controller
+    });
+    _fetchCards(); // Fetch cards again
   }
   void _initializeAnimations() {
     for (int i = 0; i < _totalCards; i++) {
@@ -124,10 +149,8 @@ class _CardDistributionState extends State<DistributeCard>
   }
 
   Offset _calculateEndOffset(int index) {
-    int playerIndex = index %
-        _numberOfPlayers; // Determine which player receives the card
-    int cardPosition = index ~/
-        _numberOfPlayers; // Determine the card's position in the round-robin distribution
+    int playerIndex = index % _numberOfPlayers; // Determine which player receives the card
+    int cardPosition = index ~/ _numberOfPlayers; // Determine the card's position in the round-robin distribution
 
     // Player-specific positioning
     switch (playerIndex) {
@@ -144,70 +167,30 @@ class _CardDistributionState extends State<DistributeCard>
     }
   }
 
-  // List<String> _generateDeck() {
-  //   List<String> suits = ['\u2660', '\u2665', '\u2666', '\u2663'];
-  //   List<String> ranks = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A'];
-  //   return [
-  //     for (var suit in suits)
-  //       for (var rank in ranks) '$rank$suit'
-  //   ];
-  // }
   Offset _calculatePlayerOffset(int cardPosition, int playerNumber) {
     double xOffset;
     double yOffset;
 
     switch (playerNumber) {
       case 1:
-        if (cardPosition < 3) {
-          xOffset = 0.55 * (cardPosition + 8); // First three cards
-          yOffset = -0.5;
-        } else if (cardPosition < 8) {
-          xOffset = 0.55 * (cardPosition + 4); // Next five cards
-          yOffset = 0.1;
-        } else {
-          xOffset = 0.55 * (cardPosition - 1); // Remaining cards
-          yOffset = 0.6;
-        }
+        xOffset = 0.55 * (cardPosition < 3 ? cardPosition + 8 : cardPosition < 8 ? cardPosition + 4 : cardPosition - 1);
+        yOffset = cardPosition < 3 ? -0.5 : cardPosition < 8 ? 0.1 : 0.6;
         break;
       case 2:
-        if (cardPosition < 3) {
-          xOffset = -5.5 + (cardPosition + 1.0) * 0.5; // First three cards
-          yOffset = -0.5;
-        } else if (cardPosition < 8) {
-          xOffset = -5.5 + (cardPosition - 3) * 0.5; // Next five cards
-          yOffset = 0.1;
-        } else {
-          xOffset = -5.5 + (cardPosition - 8) * 0.5; // Remaining cards
-          yOffset = 0.6;
-        }
+        xOffset = -5.5 + (cardPosition < 3 ? cardPosition + 1.0 : cardPosition < 8 ? cardPosition - 3 : cardPosition - 8) * 0.5;
+        yOffset = cardPosition < 3 ? -0.5 : cardPosition < 8 ? 0.1 : 0.6;
         break;
       case 3:
-        if (cardPosition < 3) {
-          xOffset = -0.5 + (cardPosition + 0.0) * 0.5; // First three cards
-          yOffset = -2.0;
-        } else if (cardPosition < 8) {
-          xOffset = (cardPosition - 5) * 0.5; // Next five cards
-          yOffset = -1.5;
-        } else {
-          xOffset = (cardPosition - 10) * 0.5; // Remaining cards
-          yOffset = -1.1;
-        }
+        xOffset = (cardPosition < 3 ? -1.0 + cardPosition * 1.0 : (cardPosition < 8 ? cardPosition - 5 : cardPosition - 10)) * 0.5;
+        yOffset = cardPosition < 3 ? -2.0 : cardPosition < 8 ? -1.5 : -1.1;
         break;
       case 4:
-        if (cardPosition < 3) {
-          xOffset = -0.5 + (cardPosition + 0.0) * 0.5; // First three cards
-          yOffset = 1.0;
-        } else if (cardPosition < 8) {
-          xOffset = (cardPosition - 5) * 0.5; // Next five cards
-          yOffset = 1.5;
-        } else {
-          xOffset = (cardPosition - 10) * 0.5; // Remaining cards
-          yOffset = 2.0;
-        }
+        xOffset = (cardPosition < 3 ? -1.0 + cardPosition * 1.0 : (cardPosition < 8 ? cardPosition - 5 : cardPosition - 10)) * 0.5;
+        yOffset = cardPosition < 3 ? 1.0 : cardPosition < 8 ? 1.5 : 2.0;
         break;
       default:
-        xOffset = 0.0; // Fallback
-        yOffset = 0.0; // Fallback
+        xOffset = 0.0;
+        yOffset = 0.0;
         break;
     }
 
@@ -220,6 +203,7 @@ class _CardDistributionState extends State<DistributeCard>
   }
 
   void _triggerAnimation() {
+
     if (!_isAnimating) {
       setState(() => _isAnimating = true);
       _controller.forward(from: 0.0).whenComplete(() {
@@ -227,6 +211,7 @@ class _CardDistributionState extends State<DistributeCard>
       });
     }
   }
+
   void _distributeCards() {
     // Clear previous player cards
     for (var player in players) {
@@ -235,56 +220,66 @@ class _CardDistributionState extends State<DistributeCard>
 
     // Distribute cards to players
     for (int i = 0; i < _deck.length; i++) {
-      int playerIndex = i % _numberOfPlayers; // Determine which player receives the card
-      players[playerIndex].add(_deck[i]); // Add card to the respective player's hand
+      int playerIndex =
+          i % _numberOfPlayers; // Determine which player receives the card
+      players[playerIndex]
+          .add(_deck[i]); // Add card to the respective player's hand
     }
   }
+
   @override
   void dispose() {
     _controller.dispose();
+    _flipController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    double cardWidth = MediaQuery
-        .of(context)
-        .size
-        .width * 0.06; // 6% of screen width
-    double cardHeight = MediaQuery
-        .of(context)
-        .size
-        .height * 0.17; // 17% of screen height
+    double cardWidth =
+        MediaQuery.of(context).size.width * 0.06; // 6% of screen width
+    double cardHeight =
+        MediaQuery.of(context).size.height * 0.17; // 17% of screen height
     return Scaffold(
         body: Container(
           decoration: BoxDecoration(
             image: DecorationImage(
                 image: AssetImage('assets/images/gamebg.png'),
-                fit: BoxFit.cover),
+                fit: BoxFit.cover
+            ),
           ),
           child: Stack(
-            children: [
 
-              isLoading
-                  ? Center(child: CircularProgressIndicator())
-                  : hasError
-                  ? Center(child: Text("Error loading deck."))
-                  : _deck.isEmpty
-                  ? Center(child: Text("Deck is empty!"))
-                  : ListView.builder(
-                itemCount: _deck.length,
-                itemBuilder: (context, index) {
-                  return ListTile(title: Text(_deck[index]));
-                },
-              ),
+            children: [
+              if(isLoading)
+                Center(child: CircularProgressIndicator())
+              else if (hasError)
+                Center(child: Text("Error fetching deck!"))
+              else
+
+
+              // isLoading ? Center(child: CircularProgressIndicator())
+              //         : _deck.isEmpty
+              //             ? Center(child: Text("Deck is empty!"))
+              //             : ListView.builder(
+              //                 itemCount: _deck.length,
+              //                 itemBuilder: (context, index) {
+              //                   return ListTile(title: Text(_deck[index]));
+              //                 },
+              //               ),
               Center(
                 child: Stack(
                   alignment: Alignment.center,
                   children: List.generate(_totalCards, (index) {
                     String card = _deck[index];
-                    String rank = card.substring(0, card.length - 1); // Extract rank
-                    String suit = card[card.length - 1]; // Extract suit
-                    String suitIcon = suitIcons[suit] ?? ''; // Get the suit icon
+                    String rank = card.substring(0, card.length - 1);
+                    String suit = card[card.length - 1];
+                    String suitIcon = {
+                      'S': '\u2660',
+                      'D': '\u2666',
+                      'H': '\u2665',
+                      'C': '\u2663',
+                    }[suit] ?? '';
 
 
                     return SlideTransition(
@@ -292,57 +287,58 @@ class _CardDistributionState extends State<DistributeCard>
                       child: Transform.rotate(
                         angle: _rotationAnimations[index].value * 3.1416 * 2,
                         child: Card(
-                          shape: RoundedRectangleBorder(),
+                          shape: RoundedRectangleBorder(
+
+                              borderRadius: BorderRadius.circular(5.0)),
                           child: Container(
                             width: cardWidth,
                             height: cardHeight,
                             decoration: BoxDecoration(
                               borderRadius: BorderRadius.circular(5.0),
-                              image: DecorationImage(
-                                image:  index % _numberOfPlayers == 3
-                                    ? AssetImage('assets/images/transparent.png') // Use a transparent image or null for player 1
-                                    : AssetImage('assets/images/card_back.png'),
-                                // Placeholder for card face image
+                              image: (countdown > 0) && (index % _numberOfPlayers != 3)
+                                  ? DecorationImage(
+
+                                image: AssetImage('assets/images/card_back.png'),
                                 fit: BoxFit.cover,
-                              ),
+                              )
+                                  : null,
                             ),
-                            child: index % _numberOfPlayers < 3 || !showOtherPlayersCards
+                            child:  index % _numberOfPlayers < (countdown > 0 ? 3 : 0)
                                 ? Container() // Empty container for card back
                                 : Positioned(
-                                top: 1,
-                                left: 1,
-                                child:
-                                RichText(
-                                  text: TextSpan(
-                                    children: [
-                                      TextSpan(
-                                        text: rank, // Display the rank
-                                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black),
-                                      ),
-                                      WidgetSpan(
-                                        child: Padding(
-                                          padding: const EdgeInsets.only(left: 4.0), // Add some space between rank and suit
-                                          child: Text(
-                                            suitIcon, // Display the suit icon
+                                    top: 1,
+                                    left: 1,
+                                    child: RichText(
+                                      text: TextSpan(
+                                        children: [
+                                          TextSpan(
+                                            text: rank, // Display the rank
                                             style: TextStyle(
-                                              fontSize: 14,
-                                              color: suit == 'H' ? Color(0xFFFF1200) : Colors.black, // Red for hearts, black for others
+                                                fontSize: 16,
+                                                fontWeight: FontWeight.bold,
+                                                color: Colors.black),
+                                          ),
+                                          WidgetSpan(
+                                            child: Padding(
+                                              padding: const EdgeInsets.only(
+                                                  left: 4.0),
+                                              // Add some space between rank and suit
+                                              child: Text(
+                                                suitIcon, // Display the suit icon
+                                                style: TextStyle(
+                                                  fontSize: 14,
+                                                  color: suit == 'H'
+                                                      ? Color(0xFFFF1200)
+                                                      : Colors
+                                                          .black, // Red for hearts, black for others
+                                                ),
+                                              ),
                                             ),
                                           ),
-                                        ),
+                                        ],
                                       ),
-                                    ],
+                                    ),
                                   ),
-                                ),
-                                // Text(
-                                //   _deck[index],
-                                //   // Display the card from the deck
-                                //   style: TextStyle(fontSize: 14,
-                                //       fontWeight: FontWeight.bold,
-                                //       color: Colors.black
-                                //   ),
-                                // )
-                            ),
                           ),
                         ),
                       ),
@@ -356,16 +352,15 @@ class _CardDistributionState extends State<DistributeCard>
                 child: Column(
                   children: [
                     IconButton(
-                      icon: Image.asset(
-                          'assets/images/game_back.webp', width: 40,
-                          height: 40),
+                      icon: Image.asset('assets/images/game_back.webp',
+                          width: 40, height: 40),
                       onPressed: () {
                         Navigator.pushReplacement(
                           context,
-                          MaterialPageRoute(builder: (context) =>
-                              Homepage(
-                                // username: "username"
-                              )),
+                          MaterialPageRoute(
+                              builder: (context) => Homepage(
+                                  // username: "username"
+                                  )),
                         );
                       },
                     ),
@@ -379,42 +374,29 @@ class _CardDistributionState extends State<DistributeCard>
                 ),
               ),
             ],
-
           ),
-
         ),
-        floatingActionButton:
-        Column(
+        floatingActionButton: Column(
           mainAxisAlignment: MainAxisAlignment.end,
           children: [
-          ElevatedButton(
-          onPressed: _triggerAnimation,
-          child: Icon(Icons.play_arrow),
-        ),
-
-
-
-
-        ElevatedButton(
-          onPressed: () {
-            showDialog(
-              context: context,
-              builder: (BuildContext context) {
-                return Dialog(
-                  child: StartDialog(playerCards: players[3]),
+            ElevatedButton(
+              onPressed: _resetGame,
+              child: Icon(Icons.play_arrow),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                showDialog(
+                  context: context,
+                  builder: (BuildContext context) {
+                    return Dialog(
+                      child: StartDialog(playerCards: players[3]),
+                    );
+                  },
                 );
               },
-            );
-          },
-          child: Text('Arrange'),
-        ),
+              child: Text('Arrange'),
+            ),
           ],
-
-        )
-
-
-    );
+        ));
   }
-
-
 }

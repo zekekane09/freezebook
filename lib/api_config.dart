@@ -195,7 +195,9 @@ class ApiService {
       int playerId = userData["id"];
       String username = userData["username"];
       String authToken = responseData["authToken"];
-      await _saveAuthToken(authToken,"$playerId",username);
+      await _saveAuthToken(
+          // authToken,
+          "$playerId",username);
       return BaseResponse(
         code: "SUCCESS",
         message: "User created successfully.",
@@ -233,8 +235,10 @@ class ApiService {
       final userData = responseData["user"];
       int playerId = userData["id"];
       String username = userData["username"];
-      String authToken = responseData["authToken"];
-      await _saveAuthToken(authToken,"$playerId",username);
+      // String authToken = responseData["authToken"];
+      await _saveAuthToken(
+          // authToken,
+          "$playerId",username);
       return BaseResponse(
         code: "SUCCESS",
         message: "User created successfully.",
@@ -249,13 +253,15 @@ class ApiService {
     }
   }
   /// Saves auth token in SharedPreferences
-  static Future<void> _saveAuthToken(String authToken,String playerId,String username) async {
+  static Future<void> _saveAuthToken(
+      // String authToken,
+      String playerId,String username) async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
-     await prefs.setString('authToken', authToken);
+     // await prefs.setString('authToken', authToken);
     await prefs.setString('playerId', playerId);
     await prefs.setString('username', username);
     // print("🔹 Auth token saved: $token");
-    print("🔹 AuthToken saved: $authToken");
+    // print("🔹 AuthToken saved: $authToken");
     print("🔹 PlayerId saved: $playerId");
     print("🔹 Username saved: $username");
   }
