@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:freezebook/utils/sharedpreferencesextension.dart';
 import 'package:intl/intl.dart';
@@ -39,6 +40,10 @@ class _SignUpPageState extends State<SignUpPage> {
   void initState() {
     super.initState();
     _getFcmToken();
+    SystemChrome.setPreferredOrientations([
+      DeviceOrientation.portraitUp,
+      DeviceOrientation.portraitDown,
+    ]);
   }
 
   Future<void> _getFcmToken() async {

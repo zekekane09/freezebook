@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:freezebook/homepage.dart';
 import 'api_config.dart';
 import 'data/baseresponse.dart';
@@ -21,6 +22,10 @@ class _LoginPageState extends State<LoginPage> {
   void initState() {
     super.initState();
     _loadCredentials();
+    SystemChrome.setPreferredOrientations([
+      DeviceOrientation.portraitUp,
+      DeviceOrientation.portraitDown,
+    ]);
   }
 
   // Future<void> loginUser (String? username, String? password, BuildContext context) async {

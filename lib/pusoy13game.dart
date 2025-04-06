@@ -58,6 +58,10 @@ class _Pusoy13GameState extends State<Pusoy13Game> {
   @override
   void initState() {
     super.initState();
+    SystemChrome.setPreferredOrientations([
+      DeviceOrientation.landscapeLeft,
+      DeviceOrientation.landscapeRight,
+    ]);
     _initializeGame();
   }
 

@@ -29,8 +29,8 @@ flutter_ios_podfile_setup
 
 target 'Runner' do
   use_frameworks!
-#   pod 'firebase_core', :path => '.symlinks/plugins/firebase_core/ios'
-#   pod 'firebase_database', :path => '.symlinks/plugins/firebase_database/ios'
+  pod 'Firebase/CoreOnly', '11.10.0'
+  pod 'Firebase/Messaging', '11.10.0'
   use_modular_headers!
   flutter_install_all_ios_pods File.dirname(File.realpath(__FILE__))
   target 'RunnerTests' do

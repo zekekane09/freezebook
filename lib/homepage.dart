@@ -13,12 +13,8 @@ import 'movie_explorer_app.dart';
 import 'notificationscreen.dart'; // Import your NotificationScreen
 
 class Homepage extends StatefulWidget {
-  // final String? email;    /// use this if needed
-  // final String? password;   /// use this if needed
 
-  const Homepage({super.key,
-    // required this.email,required this.password  /// use this if needed
-  });
+  const Homepage({super.key,});
 
   @override
   _HomepageState createState() => _HomepageState();
@@ -45,10 +41,8 @@ class _HomepageState extends State<Homepage> with SingleTickerProviderStateMixin
   }
 
   Future<void> _onTabChanged() async {
-    if (_tabController.index == 2) { // Pusoy13Game tab index
-      // Set the system UI to fullscreen
+    if (_tabController.index == 2) {
       SharedPreferences prefs = await SharedPreferences.getInstance();
-      // String? playerId = prefs.getStringKey(SharedPreferencesKeys.playerId);
       String? username = prefs.getStringKey(SharedPreferencesKeys.playerId);
       SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
       Navigator.pushReplacement(
@@ -56,6 +50,7 @@ class _HomepageState extends State<Homepage> with SingleTickerProviderStateMixin
         MaterialPageRoute(builder: (context) =>  Pusoy13Game(username: username)),
       );
     } else if ((_tabController.index == 4)) {
+      SystemChrome.setPreferredOrientations([DeviceOrientation.landscapeLeft, DeviceOrientation.landscapeRight]);
       SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
       Navigator.pushReplacement(
         context,
@@ -68,11 +63,9 @@ class _HomepageState extends State<Homepage> with SingleTickerProviderStateMixin
         MaterialPageRoute(builder: (context) =>  PlayersDistributionOneLine()),
       );
     }
-
-
-
     else {
-      // Reset the system UI when leaving the Pusoy13Game tab
+      SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+      SystemChrome.setPreferredOrientations(DeviceOrientation.values);
 
     }
   }
@@ -83,12 +76,11 @@ class _HomepageState extends State<Homepage> with SingleTickerProviderStateMixin
     
     return WillPopScope(
       onWillPop: () async {
-        // Prevent the app from closing
         return await _showLogoutDialog(context);
       },
       child: Scaffold(
         body: Container(
-          color: Colors.grey, // Use a solid color instead of withValues()
+          color: Colors.grey,
           child: Column(
             children: [
               // Main Content
@@ -101,7 +93,7 @@ class _HomepageState extends State<Homepage> with SingleTickerProviderStateMixin
                       Builder(
                         builder: (context) {
                           final tabIndex = _tabController.index;
-                          return tabIndex == 0 // Only show header on the HomeScreen tab
+                          return tabIndex == 0
                               ? Padding(
                             padding: const EdgeInsets.all(8.0),
                             child: Row(
@@ -120,14 +112,14 @@ class _HomepageState extends State<Homepage> with SingleTickerProviderStateMixin
                               ],
                             ),
                           )
-                              : SizedBox.shrink(); // Return an empty widget if not on HomeScreen
+                              : SizedBox.shrink();
                         },
                       ),
                       // Tab Bar
                       TabBar(
                         controller: _tabController,
                         indicatorColor: Color(0xc64d4dfa),
-                        labelColor: Color(0xc64d4dfa), // Color of the selected tab's text and icon
+                        labelColor: Color(0xc64d4dfa),
                         unselectedLabelColor: Colors.grey,
                         tabs: [
                           Tab(icon: Icon(Icons.home)),
@@ -144,8 +136,8 @@ class _HomepageState extends State<Homepage> with SingleTickerProviderStateMixin
                         child: TabBarView(
                           controller: _tabController,
                           children: [
-                            HomeScreen(), // Pass any required parameters
-                            CreateGameScreen(), // Replace with your actual screens
+                            HomeScreen(),
+                            CreateGameScreen(),
                             Pusoy13Game(
                               username: username,
                             ),

@@ -14,8 +14,6 @@ class ApiService {
   static Future<List<Map<String, dynamic>>> getGames() async {
     final url = "$baseUrl/api:oMkvQ-3B/games";
     final body = jsonEncode({});
-    // Replace with your actual API endpoint
-    // final response = await http.get(Uri.parse("https://x8ki-letl-twmt.n7.xano.io/api:oMkvQ-3B/games"));
     print("🔹 [GET GAMES] Sending Request: $url");
     print("🔹 Headers: { Content-Type: application/json }");
     print("🔹 Body: $body");
@@ -23,21 +21,28 @@ class ApiService {
       Uri.parse(url),
       headers: {"Content-Type": "application/json"},
     );
-    if (response.statusCode == 200) {
-      final List<dynamic> responseData = jsonDecode(response.body);
-      print("🔹 Response Data: $responseData");
-      List<Map<String, dynamic>> games = responseData.map((game) {
-        return {
-          "id": game["id"],
-          "game_name": game["game_name"] ?? "Unknown Game",
-          "status": game["status"] ?? "Unknown Status",
-          "created_at": game["created_at"]?? 0,
-          "_players_of_games": game["_players_of_games"]?? 0,
-        };
-      }).toList();
-      return games; // Return the list of games on success
-    } else {
-      throw Exception("Failed to load games: ${response.body}");
+    try {
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> responseData = jsonDecode(response.body);
+        final List<dynamic> gamesList = responseData['games'];
+        print("🔹 Response Data: $responseData");
+
+        List<Map<String, dynamic>> games = gamesList.map((game) {
+          return {
+            "id": game["id"],
+            "game_name": game["game_name"] ?? "Unknown Game",
+            "status": game["status"] ?? "Unknown Status",
+            "deck": game["deck"] ?? 0,
+            "_players_of_games": game["_players_of_games"] ?? 0,
+          };
+        }).toList();
+        return games; // Return the list of games on success
+      } else {
+        throw Exception("ddddddssss to load games: ${response.body}");
+      }
+    } catch (e) {
+      print("🔹 Error: $e");
+      throw Exception("Failed to load games: $e");
     }
   }
   /// Creates a new game
@@ -194,7 +199,7 @@ class ApiService {
       final userData = responseData["user"];
       int playerId = userData["id"];
       String username = userData["username"];
-      String authToken = responseData["authToken"];
+      // String authToken = responseData["authToken"];
       await _saveAuthToken(
           // authToken,
           "$playerId",username);
@@ -212,7 +217,7 @@ class ApiService {
     }
   }
   static Future<BaseResponse> login(String email,String password) async {
-    https://x8ki-letl-twmt.n7.xano.io/api:oMkvQ-3B/players/login
+    // https://x8ki-letl-twmt.n7.xano.io/api:oMkvQ-3B/players/login
     final url = "$baseUrl/api:oMkvQ-3B/players/login";
     // final url = "$baseUrl/api:ktP3aUwj/auth/signup";
     final body = jsonEncode({"email": email,"password": password});

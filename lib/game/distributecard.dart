@@ -1,10 +1,14 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../api_config.dart';
 import '../arrangeScreen.dart';
 import '../homepage.dart';
+import '../outlinedtext.dart';
+import '../utils/sharedpreferencesextension.dart';
 
 class DistributeCard extends StatefulWidget {
   @override
@@ -29,10 +33,18 @@ class _CardDistributionState extends State<DistributeCard>
   int countdown = 10; // Countdown duration
   Timer? _timer; // Timer instance
   bool showOtherPlayersCards = false; // Flag to show other players' cards
+  String? username;
+  List<Player> playersInfo = [
+
+  ];
 
   @override
   void initState() {
     super.initState();
+    SystemChrome.setPreferredOrientations([
+      DeviceOrientation.landscapeLeft,
+      DeviceOrientation.landscapeRight,
+    ]);
     _fetchCards();
   }
 
@@ -53,6 +65,14 @@ class _CardDistributionState extends State<DistributeCard>
   }
 
   void _fetchCards() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    username = prefs.getStringKey(SharedPreferencesKeys.username);
+    playersInfo = [
+      Player(name: "Player 1", profilePictureUrl: "assets/images/player1.png"),
+    Player(name: "Player 2", profilePictureUrl: "assets/images/player2.png"),
+    Player(name: "Player 3", profilePictureUrl: "assets/images/player3.png"),
+    Player(name: username ?? "Player 4", profilePictureUrl: "assets/images/player4.png"),
+  ];
     try {
       setState(() {
         isLoading = true;
@@ -75,6 +95,7 @@ class _CardDistributionState extends State<DistributeCard>
           _triggerAnimation();
           isLoading = false;
           _startCountdown();
+
         });
       }
     } catch (e) {
@@ -104,6 +125,7 @@ class _CardDistributionState extends State<DistributeCard>
       }
     });
   }
+
   void _resetGame() {
     // Reset all relevant variables and states
     setState(() {
@@ -118,6 +140,7 @@ class _CardDistributionState extends State<DistributeCard>
     });
     _fetchCards(); // Fetch cards again
   }
+
   void _initializeAnimations() {
     for (int i = 0; i < _totalCards; i++) {
       Offset endOffset = _calculateEndOffset(i);
@@ -146,11 +169,14 @@ class _CardDistributionState extends State<DistributeCard>
         ),
       );
     }
+
   }
 
   Offset _calculateEndOffset(int index) {
-    int playerIndex = index % _numberOfPlayers; // Determine which player receives the card
-    int cardPosition = index ~/ _numberOfPlayers; // Determine the card's position in the round-robin distribution
+    int playerIndex =
+        index % _numberOfPlayers; // Determine which player receives the card
+    int cardPosition = index ~/
+        _numberOfPlayers; // Determine the card's position in the round-robin distribution
 
     // Player-specific positioning
     switch (playerIndex) {
@@ -173,11 +199,11 @@ class _CardDistributionState extends State<DistributeCard>
 
     switch (playerNumber) {
       case 1:
-        xOffset = 0.55 * (cardPosition < 3 ? cardPosition + 8 : cardPosition < 8 ? cardPosition + 4 : cardPosition - 1);
+        xOffset = 0.45 * (cardPosition < 3 ? cardPosition + 8 : cardPosition < 8 ? cardPosition + 4 : cardPosition - 1);
         yOffset = cardPosition < 3 ? -0.5 : cardPosition < 8 ? 0.1 : 0.6;
         break;
       case 2:
-        xOffset = -5.5 + (cardPosition < 3 ? cardPosition + 1.0 : cardPosition < 8 ? cardPosition - 3 : cardPosition - 8) * 0.5;
+        xOffset = -5.0 + (cardPosition < 3 ? cardPosition + 1.0 : cardPosition < 8 ? cardPosition - 3 : cardPosition - 8) * 0.5;
         yOffset = cardPosition < 3 ? -0.5 : cardPosition < 8 ? 0.1 : 0.6;
         break;
       case 3:
@@ -203,7 +229,6 @@ class _CardDistributionState extends State<DistributeCard>
   }
 
   void _triggerAnimation() {
-
     if (!_isAnimating) {
       setState(() => _isAnimating = true);
       _controller.forward(from: 0.0).whenComplete(() {
@@ -240,112 +265,153 @@ class _CardDistributionState extends State<DistributeCard>
         MediaQuery.of(context).size.width * 0.06; // 6% of screen width
     double cardHeight =
         MediaQuery.of(context).size.height * 0.17; // 17% of screen height
+
+    double screenWidth = MediaQuery.of(context).size.height;
+    double fontSize = screenWidth * 0.04;
+    double suitfontSize = screenWidth * 0.07;
+
     return Scaffold(
         body: Container(
           decoration: BoxDecoration(
             image: DecorationImage(
                 image: AssetImage('assets/images/gamebg.png'),
-                fit: BoxFit.cover
-            ),
+                fit: BoxFit.cover),
           ),
           child: Stack(
-
             children: [
-              if(isLoading)
+              if (isLoading)
                 Center(child: CircularProgressIndicator())
               else if (hasError)
                 Center(child: Text("Error fetching deck!"))
               else
+                Center(
+                  child: Stack(
+                    alignment: Alignment.center,
+                    children: List.generate(_totalCards, (index) {
+                      String card = _deck[index];
+                      String rank = card.substring(0, card.length - 1);
+                      String suit = card[card.length - 1];
+                      String suitIcon = {
+                            'S': '\u2660',
+                            'D': '\u2666',
+                            'H': '\u2665',
+                            'C': '\u2663',
+                          }[suit] ??
+                          '';
 
+                      return SlideTransition(
+                        position: _positionAnimations[index],
+                        child: Transform.rotate(
+                          angle: _rotationAnimations[index].value * 3.1416 * 2,
+                          child: Card(
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(5.0)),
+                            child: Container(
+                              width: cardWidth,
+                              height: cardHeight,
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(5.0),
+                                image: (countdown > 0) &&
+                                        (index % _numberOfPlayers != 3)
+                                    ? DecorationImage(
+                                        image: AssetImage(
+                                            'assets/images/card_back.png'),
+                                        fit: BoxFit.cover,
+                                      )
+                                    : null,
+                              ),
+                              child: index % _numberOfPlayers <
+                                      (countdown > 0 ? 3 : 0)
+                                  ? Container() // Empty container for card back
+                                  : Stack(
+                                      children: [
+                                        Positioned(
+                                          left: 5,
+                                          child: RichText(
+                                            text: TextSpan(
 
-              // isLoading ? Center(child: CircularProgressIndicator())
-              //         : _deck.isEmpty
-              //             ? Center(child: Text("Deck is empty!"))
-              //             : ListView.builder(
-              //                 itemCount: _deck.length,
-              //                 itemBuilder: (context, index) {
-              //                   return ListTile(title: Text(_deck[index]));
-              //                 },
-              //               ),
-              Center(
-                child: Stack(
-                  alignment: Alignment.center,
-                  children: List.generate(_totalCards, (index) {
-                    String card = _deck[index];
-                    String rank = card.substring(0, card.length - 1);
-                    String suit = card[card.length - 1];
-                    String suitIcon = {
-                      'S': '\u2660',
-                      'D': '\u2666',
-                      'H': '\u2665',
-                      'C': '\u2663',
-                    }[suit] ?? '';
+                                              children: [
 
-
-                    return SlideTransition(
-                      position: _positionAnimations[index],
-                      child: Transform.rotate(
-                        angle: _rotationAnimations[index].value * 3.1416 * 2,
-                        child: Card(
-                          shape: RoundedRectangleBorder(
-
-                              borderRadius: BorderRadius.circular(5.0)),
-                          child: Container(
-                            width: cardWidth,
-                            height: cardHeight,
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(5.0),
-                              image: (countdown > 0) && (index % _numberOfPlayers != 3)
-                                  ? DecorationImage(
-
-                                image: AssetImage('assets/images/card_back.png'),
-                                fit: BoxFit.cover,
-                              )
-                                  : null,
-                            ),
-                            child:  index % _numberOfPlayers < (countdown > 0 ? 3 : 0)
-                                ? Container() // Empty container for card back
-                                : Positioned(
-                                    top: 1,
-                                    left: 1,
-                                    child: RichText(
-                                      text: TextSpan(
-                                        children: [
-                                          TextSpan(
-                                            text: rank, // Display the rank
-                                            style: TextStyle(
-                                                fontSize: 16,
-                                                fontWeight: FontWeight.bold,
-                                                color: Colors.black),
-                                          ),
-                                          WidgetSpan(
-                                            child: Padding(
-                                              padding: const EdgeInsets.only(
-                                                  left: 4.0),
-                                              // Add some space between rank and suit
-                                              child: Text(
-                                                suitIcon, // Display the suit icon
-                                                style: TextStyle(
-                                                  fontSize: 14,
-                                                  color: suit == 'H'
-                                                      ? Color(0xFFFF1200)
-                                                      : Colors
-                                                          .black, // Red for hearts, black for others
+                                                TextSpan(
+                                                  text: rank, // Display the rank
+                                                  style: TextStyle(
+                                                      fontSize: fontSize,
+                                                      fontWeight:
+                                                          FontWeight.bold,
+                                                      color: (suit == 'D' || suit == 'H')?Colors.red : Colors.black),
                                                 ),
-                                              ),
+
+                                              ],
                                             ),
                                           ),
-                                        ],
-                                      ),
+                                        ),
+                                        Positioned(
+                                          top:(suit == 'D')?20:15 ,
+                                          left: 1,
+                                          child: RichText(
+                                            text: TextSpan(
+                                              children: [
+                                                WidgetSpan(
+                                                  child: Padding(
+                                                    padding:
+                                                    const EdgeInsets.only(
+                                                        left: 4.0),
+                                                    // Add some space between rank and suit
+                                                    child: Text(
+                                                      suitIcon,
+                                                      // Display the suit icon
+                                                      style: TextStyle(
+                                                        fontSize: (suit == 'D')?fontSize:fontSize,
+                                                        color: suit == 'H'
+                                                            ? Color(0xFFFF1200)
+                                                            : Colors
+                                                            .black, // Red for hearts, black for others
+                                                      ),
+                                                    ),
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                        ),
+                                        Positioned(
+                                          right:1 ,
+                                          bottom: 1,
+                                          child: RichText(
+                                            text: TextSpan(
+                                              children: [
+                                                WidgetSpan(
+                                                  child: Padding(
+                                                    padding:
+                                                    const EdgeInsets.only(
+                                                        left: 4.0),
+                                                    // Add some space between rank and suit
+                                                    child: Text(
+                                                      suitIcon,
+                                                      // Display the suit icon
+                                                      style: TextStyle(
+                                                        fontSize: (suit == 'D')?suitfontSize:suitfontSize,
+                                                        color: suit == 'H'
+                                                            ? Color(0xFFFF1200)
+                                                            : Colors
+                                                            .black, // Red for hearts, black for others
+                                                      ),
+                                                    ),
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                        )
+                                      ],
                                     ),
-                                  ),
+                            ),
                           ),
                         ),
-                      ),
-                    );
-                  }),
+                      );
+                    }),
+                  ),
                 ),
-              ),
               Positioned(
                 top: 0,
                 left: 0,
@@ -373,6 +439,102 @@ class _CardDistributionState extends State<DistributeCard>
                   style: TextStyle(fontSize: 15, color: Colors.white),
                 ),
               ),
+              Positioned(
+                top: 130,
+                left: 8,
+                right: 8,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    // Player 2 (Left)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 10),
+                      child: Column(
+                        children: [
+                          CircleAvatar(
+                            radius: 25,
+                            backgroundImage: AssetImage(playersInfo[1].profilePictureUrl), // Player 2
+                          ),
+                          SizedBox(height: 5),
+                          OutlinedText(
+                            strokeColor: Colors.black,
+                            fontSize: fontSize,
+                            text : playersInfo[1].name,
+                            textColor: Colors.white,
+                          ),
+                        ],
+                      ),
+                    ),
+                    // Player 1 (Right)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 10),
+                      child: Column(
+                        children: [
+                          CircleAvatar(
+                            radius: 25,
+                            backgroundImage: AssetImage(playersInfo[0].profilePictureUrl), // Player 1
+                          ),
+                          SizedBox(height: 5),
+                          OutlinedText(
+                            strokeColor: Colors.black,
+                            fontSize: fontSize,
+                            text : playersInfo[0].name,
+                            textColor: Colors.white,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Positioned(
+                top: 8,
+                left: 250,
+                bottom: 8,
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    // Player 2 (Left)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 10),
+                      child: Column(
+                        children: [
+                          CircleAvatar(
+                            radius: 25,
+                            backgroundImage: AssetImage(playersInfo[1].profilePictureUrl), // Player 2
+                          ),
+                          SizedBox(height: 5),
+                          OutlinedText(
+                            strokeColor: Colors.black,
+                            fontSize: fontSize,
+                            text : playersInfo[2].name,
+                            textColor: Colors.white,
+                          ),
+                        ],
+                      ),
+                    ),
+                    // Player 1 (Right)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 10),
+                      child: Column(
+                        children: [
+                          CircleAvatar(
+                            radius: 25,
+                            backgroundImage: AssetImage(playersInfo[0].profilePictureUrl), // Player 1
+                          ),
+                          SizedBox(height: 5),
+                          OutlinedText(
+                            strokeColor: Colors.black,
+                            fontSize: fontSize,
+                            text : playersInfo[3].name,
+                            textColor: Colors.white,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             ],
           ),
         ),
@@ -389,6 +551,7 @@ class _CardDistributionState extends State<DistributeCard>
                   context: context,
                   builder: (BuildContext context) {
                     return Dialog(
+                      backgroundColor: Colors.transparent,
                       child: StartDialog(playerCards: players[3]),
                     );
                   },
@@ -399,4 +562,11 @@ class _CardDistributionState extends State<DistributeCard>
           ],
         ));
   }
+}
+
+class Player {
+  final String name;
+  final String profilePictureUrl;
+
+  Player({required this.name, required this.profilePictureUrl});
 }

@@ -19,7 +19,6 @@ class CreateGameScreen extends StatefulWidget {
 class _CreateGameScreenState extends State<CreateGameScreen> {
   final TextEditingController gameNameController = TextEditingController();
   late Future<List<Map<String, dynamic>>> futureGames;
-  int _players = 0;
   bool isLoading = true;
   bool hasError = false;
   @override

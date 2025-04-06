@@ -87,7 +87,7 @@ class _StartDialogState extends State<StartDialog> {
     return Draggable<String>(
       data: card,
       feedback: _cardWidget(card, isDragging: true),
-      childWhenDragging: Opacity(opacity: 0.0, child: _cardWidget(card)),
+      childWhenDragging: Opacity(opacity: 0.7, child: _cardWidget(card)),
       child: DragTarget<String>(
         onAccept: (draggedCard) {
           setState(() {
@@ -107,43 +107,69 @@ class _StartDialogState extends State<StartDialog> {
     String rank = card.substring(0, card.length - 1);
     String suit = card[card.length - 1];
     String suitIcon = suitIcons[suit] ?? suit;
+    print("_cardWidget  ${rank.length}");
+    double screenWidth = MediaQuery.of(context).size.height;
+    double fontSize = screenWidth * 0.05; // 4% of screen width for font size
+    double suitfontSize = screenWidth * 0.09; // 4% of screen width for font size
     TextSpan suitTextSpan;
     if (suit == 'H') {
       suitTextSpan = TextSpan(
         text: suitIcon,
-        style: TextStyle(fontSize : 16,color:  Color(0xFFFF1200)), // Red color for hearts
+        style: TextStyle(fontSize : fontSize,color:  Color(0xFFFF1200)), // Red color for hearts
       );
-    } else {
+    } else if(suit == 'D') {
       suitTextSpan = TextSpan(
         text: suitIcon,
-        style: TextStyle(fontSize : 16,color: Colors.black), // Default color for other suits
+        style: TextStyle(fontSize : fontSize,color: Colors.black), // Default color for other suits
       );
     }
+    else {
+      suitTextSpan = TextSpan(
+        text: suitIcon,
+        style: TextStyle(fontSize : fontSize,color: Colors.black), // Default color for other suits
+      );
+    }
+
+    TextSpan largerSuitTextSpan = TextSpan(
+      text: suitIcon,
+      style: TextStyle(fontSize:(suit == 'D') ?suitfontSize : suitfontSize, color: suit == 'H' ? Color(0xFFFF1200) : Colors.black), // Larger size
+    );
     return Card(
       elevation: isDragging ? 8 : 3,
       child: Container(
-        width: 55,
-        // Adjusted width to fit better
-        height: 75,
-        // Adjusted height to fit better
+        width: 65,
+        height: 85,
         alignment: Alignment.topLeft,
         decoration: BoxDecoration(
           border: Border.all(color: Colors.black, width: 0.5),
           borderRadius: BorderRadius.circular(5),
         ),
-
-        child:
-        RichText(
-          text: TextSpan(
-            children: [
-              TextSpan(
-                text: rank,
-                style: TextStyle(fontSize: 18, color: Colors.black), // Default color for rank
+        child: Stack(
+          alignment: Alignment.topLeft,
+          children: [
+            Positioned(
+              top: 1,
+              left:(rank.length == 2)?2:7,
+              child: Text(
+                rank,
+                style: TextStyle(fontSize: fontSize*1.5, color: (suit == 'D' || suit == 'H')?Colors.red : Colors.black), // Default color for rank
               ),
-              suitTextSpan, // Add the suit TextSpan
-            ],
-          )
-
+            ),
+            Positioned(
+              top: (suit == 'D')?40 :35,
+              left: 5,
+              child: RichText(
+                text: suitTextSpan,
+              ),
+            ),
+            Positioned(
+              bottom: 2, // Adjust as needed
+              right: 2, // Align to the right
+              child: RichText(
+                text: largerSuitTextSpan, // Larger suit TextSpan
+              ),
+            ),
+          ],
         ),
       ),
     );
