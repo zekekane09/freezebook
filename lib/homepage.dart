@@ -28,6 +28,10 @@ class _HomepageState extends State<Homepage> with SingleTickerProviderStateMixin
   @override
   void initState() {
     super.initState();
+    SystemChrome.setPreferredOrientations([
+      DeviceOrientation.portraitUp,
+      DeviceOrientation.portraitDown,
+    ]);
     _tabController = TabController(length: 6, vsync: this);
     _tabController.addListener(_onTabChanged);
    

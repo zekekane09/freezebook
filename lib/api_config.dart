@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:freezebook/data/baseresponse.dart';
+import 'package:freezebook/utils/sharedpreferencesextension.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -45,12 +46,60 @@ class ApiService {
       throw Exception("Failed to load games: $e");
     }
   }
+  static Future<List> getStories() async {
+    final url = "$baseUrl/api:oMkvQ-3B/stories";
+    final body = jsonEncode({});
+
+    print("🔹 [getStories] Sending Request: $url");
+    print("🔹 Headers: { Content-Type: application/json }");
+    print("🔹 Body: $body");
+
+    final response = await http.get(
+      Uri.parse(url),
+      headers: {"Content-Type": "application/json"},
+      // body: body,
+    );
+
+    print("🔹 Response Status: ${response.statusCode}");
+    print("🔹 Response Body: ${response.body}");
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    } else {
+      throw Exception("Failed to create game: ${response.body}");
+    }
+  }
+  static Future<List> getNewsFeed() async {
+    final url = "$baseUrl/api:oMkvQ-3B/newsfeed";
+    final body = jsonEncode({});
+
+    print("🔹 [getNewsFeed] Sending Request: $url");
+    print("🔹 Headers: { Content-Type: application/json }");
+    print("🔹 Body: $body");
+
+    final response = await http.get(
+      Uri.parse(url),
+      headers: {"Content-Type": "application/json"},
+      // body: body,
+    );
+
+    print("🔹 Response Status: ${response.statusCode}");
+    print("🔹 Response Body: ${response.body}");
+
+    if (response.statusCode == 200) {
+      // final Map<String, dynamic> responseData = jsonDecode(response.body);
+      // final List<dynamic> posts =jsonDecode(response.body);
+      return jsonDecode(response.body);
+    } else {
+      throw Exception("Failed to create game: ${response.body}");
+    }
+  }
   /// Creates a new game
   static Future<String> createGame(String gameName) async {
     final url = "$baseUrl/api:oMkvQ-3B/games";
     final body = jsonEncode({"game_name": gameName});
 
-    print("🔹 [CREATE GAME] Sending Request: $url");
+    print("🔹 [createGame] Sending Request: $url");
     print("🔹 Headers: { Content-Type: application/json }");
     print("🔹 Body: $body");
 
@@ -74,7 +123,7 @@ class ApiService {
     final url = "$baseUrl/api:oMkvQ-3B/players/$playerId";
     final body = jsonEncode({"games_id": gameId});
 
-    print("🔹 [JOIN GAME] Sending Request: $url");
+    print("🔹 [joinGame] Sending Request: $url");
     print("🔹 Headers: { Content-Type: application/json }");
     print("🔹 Body: $body");
 
@@ -140,13 +189,49 @@ class ApiService {
   //     throw Exception("Error fetching players: $e");
   //   }
   // }
+  static Future<List<String>> createPost(String _postController) async {
+    String? playersId;
+    https://x8ki-letl-twmt.n7.xano.io/api:oMkvQ-3B/newsfeed
+    final url = "$baseUrl/api:oMkvQ-3B/newsfeed";
+    final body = jsonEncode({""
+        "players_id": playersId,
+        "": _postController,
+      "images": [],
+    });
 
+    print("🔹 [getCards] Sending Request: $url");
+    print("🔹 Headers: { Content-Type: application/json }");
+    print("🔹 Body: $body");
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    playersId = prefs.getStringKey(SharedPreferencesKeys.playerId);
+    try {
+      final response = await http.post(
+        Uri.parse(url),
+        headers: {"Content-Type": "application/json"},
+        body: body,
+      );
+
+      print("🔹 Response Status: ${response.statusCode}");
+      print("🔹 Response Body: ${response.body}");
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> jsonResponse = jsonDecode(response.body);
+
+        return List<String>.from(jsonResponse["deck"]);
+      } else {
+        throw Exception("Failed to fetch shuffled deck: ${response.statusCode} - ${response.body}");
+      }
+    } catch (e) {
+      print("❌ Error fetching deck: $e");
+      throw Exception("Error fetching shuffled deck");
+    }
+  }
   /// Fetch shuffled deck of cards
   static Future<List<String>> getCards() async {
     final url = "$baseUrl/api:oMkvQ-3B/game/shuffle_and_deal";
     final body = jsonEncode({"games_id": 31});
 
-    print("🔹 [GET CARDS] Sending Request: $url");
+    print("🔹 [getCards] Sending Request: $url");
     print("🔹 Headers: { Content-Type: application/json }");
     print("🔹 Body: $body");
 
@@ -180,7 +265,7 @@ class ApiService {
     final url = "$baseUrl/api:oMkvQ-3B/players";
     // final url = "$baseUrl/api:ktP3aUwj/auth/signup";
     final body = jsonEncode(user.toJson());
-    print("🔹 [CREATE USER] Sending Request: $url");
+    print("🔹 [createUser] Sending Request: $url");
     print("🔹 Headers: { Content-Type: application/json }");
     print("🔹 Body: $body");
 
@@ -221,7 +306,7 @@ class ApiService {
     final url = "$baseUrl/api:oMkvQ-3B/players/login";
     // final url = "$baseUrl/api:ktP3aUwj/auth/signup";
     final body = jsonEncode({"email": email,"password": password});
-    print("🔹 [CREATE USER] Sending Request: $url");
+    print("🔹 [login] Sending Request: $url");
     print("🔹 Headers: { Content-Type: application/json }");
     print("🔹 Body: $body");
 

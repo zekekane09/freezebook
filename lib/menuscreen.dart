@@ -116,17 +116,17 @@ class _CreateGameScreenState extends State<CreateGameScreen> {
       );
       return;
     }
-    String response = await ApiService.createGame(gameNameController.text);
-    print("Game ID: $response");
-    Fluttertoast.showToast(
-      msg: "Successfully created game: $response",
-      toastLength: Toast.LENGTH_SHORT,
-      gravity: ToastGravity.BOTTOM,
-      timeInSecForIosWeb: 5,
-      backgroundColor: Colors.white,
-      textColor: Colors.black,
-      fontSize: 16.0,
-    );
+    // String response = await ApiService.createGame(gameNameController.text);
+    // print("Game ID: $response");
+    // Fluttertoast.showToast(
+    //   msg: "Successfully created game: $response",
+    //   toastLength: Toast.LENGTH_SHORT,
+    //   gravity: ToastGravity.BOTTOM,
+    //   timeInSecForIosWeb: 5,
+    //   backgroundColor: Colors.white,
+    //   textColor: Colors.black,
+    //   fontSize: 16.0,
+    // );
     Navigator.of(context).pop(); // Close the dialog after creating the game
   }
 

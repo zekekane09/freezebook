@@ -3,6 +3,8 @@ import 'dart:io'; // For File
 
 import 'package:flutter/material.dart';
 
+import 'api_config.dart';
+
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
@@ -12,16 +14,27 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   List<String> _imagePaths = []; // List to store image paths
-
+  late Future<List<dynamic>> _newsFeedFuture;
+  final TextEditingController _postController = TextEditingController();
+  bool _isPosting = false;
   @override
   void initState() {
     super.initState();
     fetchVideosFromLocalStorage(); // Fetch images when the widget is initialized
+    _newsFeedFuture = getNewsFeed();
+    getStories();
+  }
+  Future<List<dynamic>> getNewsFeed() async {
+
+    return await ApiService.getNewsFeed();
+  }
+  void getStories() async{
+    ApiService.getStories();
   }
 
   Future<void> fetchVideosFromLocalStorage() async {
     List<String> imagePaths = [];
-    String directoryPath = '/storage/emulated/0/DCIM/Camera';
+    String directoryPath = '/storage/emulated/0/DCIM';
     Directory directory = Directory(directoryPath);
 
     if (await directory.exists()) {
@@ -56,138 +69,276 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      color: Colors.black,
-      child: Column(
-        children: [
-          // Profile and Create Post
-          SizedBox(height: 6),
-          Row(
-            children: [
-              IconButton(
-                icon: Icon(Icons.account_circle, size: 45),
-                onPressed: () {},
-              ),
-              SizedBox(width: 10),
-              Expanded(
-                child: Container(
-                  decoration: BoxDecoration(
-                    border: Border.all(color: Colors.grey),
-                    borderRadius: BorderRadius.circular(25),
-                  ),
-                  child: TextButton(
-                    onPressed: () {},
-                    child: Text("What's on your mind?",
-                        style: TextStyle(color: Colors.white)),
-                  ),
-                ),
-              ),
-              SizedBox(width: 10),
-              Icon(Icons.account_box, color: Color(0xFF7eb022), size: 30),
-            ],
+    return Scaffold(
+      backgroundColor: Colors.black,
+      body: CustomScrollView(
+        slivers: [
+          // Profile and Create Post Section
+          SliverPadding(
+            padding: const EdgeInsets.symmetric(vertical: 6),
+            sliver: SliverToBoxAdapter(
+              child: _buildProfileRow(),
+            ),
           ),
 
-          Divider(color: Colors.grey),
+          // Divider
+          const SliverToBoxAdapter(
+            child: Divider(color: Colors.grey, height: 1),
+          ),
+
           // Image Carousel
-          SizedBox(
-            height: MediaQuery.of(context).size.height * 0.23,
-            child: ListView.builder(
-              scrollDirection: Axis.horizontal,
-              itemCount: _imagePaths.length,
-              itemBuilder: (context, index) {
-                return Row(
-                  children: [
-                    if (index == 0) SizedBox(width: 10),
-                    // Add SizedBox before the first item
-                    GestureDetector(
-                      onTap: () => _showFullscreenImage(index),
-                      // Show fullscreen on tap
-                      child: Stack(
-                        children: [
-                          Container(
-                            width: 110,
-                            margin: EdgeInsets.only(right: 7),
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(13),
-                              image: DecorationImage(
-                                image: FileImage(File(_imagePaths[index])),
-                                // Display the image
-                                fit: BoxFit.cover,
-                              ),
-                            ),
-                          ),
-                          Positioned(
-                            top: 5, // Adjust the position as needed
-                            left: 5, // Adjust the position as needed
-                            child: CircleAvatar(
-                              radius: 15,
-                              // Size of the user icon
-                              backgroundColor: Colors.white,
-                              // Background color of the circle
-                              child: Icon(
-                                Icons.account_circle, // User icon
-                                size: 25, // Size of the icon
-                                color: Colors.black, // Color of the icon
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                );
-              },
+          SliverToBoxAdapter(
+            child: SizedBox(
+              height: MediaQuery.of(context).size.height * 0.23,
+              child: _buildImageCarousel(),
             ),
           ),
-          Divider(color: Colors.grey),
-          // Post
-          Container(
-            padding: EdgeInsets.all(13),
-            child: Column(
-              children: [
-                Row(
-                  children: [
-                    Container(
-                      width: 50,
-                      height: 50,
-                      decoration: BoxDecoration(
-                        color: Colors.grey,
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                    ),
-                    SizedBox(width: 10),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text("Axie Infinity MarketPlace",
-                              style: TextStyle(color: Colors.white)),
-                          SizedBox(height: 5),
-                          Row(
-                            children: [
-                              Text("NOUPHIA",
-                                  style: TextStyle(
-                                      color: Colors.white, fontSize: 12)),
-                              SizedBox(width: 20),
-                              Text("17m",
-                                  style: TextStyle(
-                                      color: Colors.grey, fontSize: 12)),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
-                    Icon(Icons.more_vert, color: Colors.white),
-                    Icon(Icons.menu, color: Colors.white),
-                  ],
+
+          // Divider
+          const SliverToBoxAdapter(
+            child: Divider(color: Colors.grey, height: 1),
+          ),
+
+          // News Feed Posts
+          FutureBuilder<List<dynamic>>(
+            future: _newsFeedFuture,
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return SliverFillRemaining(
+                  child: Center(child: CircularProgressIndicator()),
+                );
+              }
+              if (snapshot.hasError) {
+                return SliverFillRemaining(
+                  child: Center(child: Text("Error: ${snapshot.error}",
+                      style: TextStyle(color: Colors.white))),
+                );
+              }
+              if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                return SliverFillRemaining(
+                  child: Center(child: Text("No news feed available",
+                      style: TextStyle(color: Colors.white))),
+                );
+              }
+
+              final posts = snapshot.data!;
+              return SliverList(
+                delegate: SliverChildBuilderDelegate(
+                      (context, index) => _buildPostItem(posts[index]),
+                  childCount: posts.length,
                 ),
-              ],
-            ),
+              );
+            },
           ),
         ],
       ),
     );
   }
+  void _showCreatePostDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setState) {
+          return AlertDialog(
+            backgroundColor: Colors.grey[850],
+            title: const Text('Create Post', style: TextStyle(color: Colors.white)),
+            content: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextField(
+                    controller: _postController,
+                    maxLines: 5,
+                    style: const TextStyle(color: Colors.white),
+                    decoration: InputDecoration(
+                      hintText: "What's on your mind?",
+                      hintStyle: const TextStyle(color: Colors.grey),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide: BorderSide(color: Colors.grey),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide: BorderSide(color: Colors.grey),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  if (_isPosting)
+                    const Center(child: CircularProgressIndicator())
+                  else
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        TextButton(
+                          onPressed: () => Navigator.pop(context),
+                          child: const Text('Cancel', style: TextStyle(color: Colors.grey)),
+                        ),
+                        ElevatedButton(
+                          onPressed: () async {
+                            if (_postController.text.isNotEmpty) {
+                              await ApiService.createPost;
+                            }
+                          },
+                          child: const Text('Post'),
+                        ),
+                      ],
+                    ),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+// Extracted Widgets for better readability
+  Widget _buildProfileRow() {
+    return Row(
+      children: [
+        IconButton(
+          icon: const Icon(Icons.account_circle, size: 45),
+          onPressed: () {},
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Container(
+            decoration: BoxDecoration(
+              border: Border.all(color: Colors.grey),
+              borderRadius: BorderRadius.circular(25),
+            ),
+            child: TextButton(
+              onPressed: _showCreatePostDialog, // Updated here
+              child: const Text("What's on your mind?",
+                  style: TextStyle(color: Colors.white)),
+            ),
+          ),
+        ),
+        const SizedBox(width: 10),
+        const Icon(Icons.account_box, color: Color(0xFF7eb022), size: 30),
+      ],
+    );
+  }
+
+  Widget _buildImageCarousel() {
+    return ListView.builder(
+      scrollDirection: Axis.horizontal,
+      itemCount: _imagePaths.length,
+      itemBuilder: (context, index) {
+        return Padding(
+          padding: EdgeInsets.only(left: index == 0 ? 10 : 0, right: 7),
+          child: GestureDetector(
+            onTap: () => _showFullscreenImage(index),
+            child: Stack(
+              children: [
+                Container(
+                  width: 110,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(13),
+                    image: DecorationImage(
+                      image: FileImage(File(_imagePaths[index])),
+                      fit: BoxFit.cover,
+                    ),
+                  ),
+                ),
+                const Positioned(
+                  top: 5,
+                  left: 5,
+                  child: CircleAvatar(
+                    radius: 15,
+                    backgroundColor: Colors.white,
+                    child: Icon(
+                      Icons.account_circle,
+                      size: 25,
+                      color: Colors.black,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildPostItem(dynamic post) {
+    final playerPostData = post['_playerpostdata'];
+    final List<dynamic> images = post['images'];
+
+    return Card(
+      margin: const EdgeInsets.all(8.0),
+      color: Colors.grey[850],
+      child: Padding(
+        padding: const EdgeInsets.all(8.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                CircleAvatar(
+                  backgroundImage: playerPostData?['profile_picture']?['url'] != null
+                      ? NetworkImage(playerPostData!['profile_picture']['url'])
+                      : null,
+                  backgroundColor: Colors.grey,
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        playerPostData?['fullname'] ?? 'Unknown',
+                        style: const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold),
+                      ),
+                      const SizedBox(height: 5),
+                      Text(
+                        post.containsKey('created_at')
+                            ? timeAgo(post['created_at'])
+                            : 'No date available',
+                        style: const TextStyle(
+                            color: Colors.grey,
+                            fontSize: 12),
+                      ),
+                    ],
+                  ),
+                ),
+                const Icon(Icons.more_vert, color: Colors.white),
+              ],
+            ),
+            const SizedBox(height: 8.0),
+            Text(
+              post['textcontent'] ?? 'No content available',
+              style: const TextStyle(color: Colors.white),
+            ),
+            if (images.isNotEmpty) ...[
+              if (images.isNotEmpty)
+                SizedBox(
+                  height: 200,
+                  child: ListView.builder(
+                    scrollDirection: Axis.horizontal,
+                    itemCount: images.length,
+                    itemBuilder: (context, index) {
+                      final image = images[index];
+                      return image?['url'] != null
+                          ? Padding(
+                        padding: EdgeInsets.only(right: 8.0),
+                        child: Image.network(image['url'], height: 180),
+                      )
+                          : SizedBox.shrink();
+                    },
+                  ),
+                )
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
 }
 
 class FullscreenImageViewer extends StatefulWidget {
@@ -385,3 +536,19 @@ class _FullscreenImageViewerState extends State<FullscreenImageViewer>
   }
 }
 
+String timeAgo(int milliseconds) {
+  final DateTime dateTime = DateTime.fromMillisecondsSinceEpoch(milliseconds);
+  final Duration difference = DateTime.now().difference(dateTime);
+
+  if (difference.inDays > 7) {
+    return '${(difference.inDays / 7).floor()} week${(difference.inDays / 7).floor() > 1 ? 's' : ''} ago';
+  } else if (difference.inDays > 0) {
+    return '${difference.inDays} day${difference.inDays > 1 ? 's' : ''} ago';
+  } else if (difference.inHours > 0) {
+    return '${difference.inHours} hour${difference.inHours > 1 ? 's' : ''} ago';
+  } else if (difference.inMinutes > 0) {
+    return '${difference.inMinutes} minute${difference.inMinutes > 1 ? 's' : ''} ago';
+  } else {
+    return 'Just now';
+  }
+}

@@ -68,7 +68,7 @@ class _CardDistributionState extends State<DistributeCard>
     SharedPreferences prefs = await SharedPreferences.getInstance();
     username = prefs.getStringKey(SharedPreferencesKeys.username);
     playersInfo = [
-      Player(name: "Player 1", profilePictureUrl: "assets/images/player1.png"),
+    Player(name: "Player 1", profilePictureUrl: "assets/images/player1.png"),
     Player(name: "Player 2", profilePictureUrl: "assets/images/player2.png"),
     Player(name: "Player 3", profilePictureUrl: "assets/images/player3.png"),
     Player(name: username ?? "Player 4", profilePictureUrl: "assets/images/player4.png"),
@@ -86,6 +86,7 @@ class _CardDistributionState extends State<DistributeCard>
 
       // Initialize animations for all cards
       _initializeAnimations();
+      StartDialog(playerCards: players[3]);
       _controller.addListener(() => setState(() {}));
 
       if (mounted) {
@@ -520,7 +521,7 @@ class _CardDistributionState extends State<DistributeCard>
                         children: [
                           CircleAvatar(
                             radius: 25,
-                            backgroundImage: AssetImage(playersInfo[0].profilePictureUrl), // Player 1
+                            backgroundImage: AssetImage(playersInfo[2].profilePictureUrl), // Player 1
                           ),
                           SizedBox(height: 5),
                           OutlinedText(
